@@ -1,0 +1,59 @@
+{
+  "targetDate": "2026-03-27",
+  "timezone": "America/Toronto",
+  "generatedAt": "2026-03-27T17:52:00-04:00",
+  "runStatus": "Snapshot seeded from the latest manual Codex sweep",
+  "schedule": {
+    "label": "Daily at 6:30 PM ET",
+    "timezone": "America/Toronto"
+  },
+  "coverageSummary": {
+    "checked": ["USD", "EUR", "JPY", "NZD", "AUD", "CHF", "CAD", "GBP"],
+    "note": "Only currencies with same-day market-relevant communication are surfaced in the board."
+  },
+  "prompt": "You are a macro & FX trading analyst specialized in real-time central bank communication tracking.\n\nYour task is to identify ALL central bank communications TODAY (including live flow) for:\nUSD / Fed, EUR / ECB, JPY / BOJ, NZD / RBNZ, AUD / RBA, CHF / SNB, CAD / BoC, GBP / BoE\n\nPRIMARY OBJECTIVE\nCapture ALL MARKET-RELEVANT CENTRAL BANK FLOW, including:\n- Speeches\n- Interviews\n- Panel discussions\n- Q&A appearances\n- Testimonies\n- Meeting minutes / summaries\n- Official statements\n- Media appearances\n- Press conferences\n- Unscheduled remarks reported by news wires\n\nCRITICAL SEARCH PRIORITY\n1. Real-time news flow first\n2. Official central bank sources second\n3. Event-based sources third\n\nTONE CLASSIFICATION\nTone must be exactly Hawkish, Neutral, Dovish, or Unknown.\n\nOUTPUT FORMAT\nDate | Member | Role/Title | Communication Type | Status | Tone | Quote/Summary | Interpretation | Expected Impact",
+  "entries": [
+    {
+      "date": "2026-03-27",
+      "currency": "USD",
+      "bank": "Federal Reserve",
+      "member": "Stephen Miran",
+      "roleTitle": "Governor, Federal Reserve Board",
+      "communicationType": "Reuters-reported remarks / speech",
+      "status": "Live",
+      "tone": "Dovish",
+      "quoteSummary": "Reuters-cited reporting said Miran laid out a roadmap for a smaller Fed balance sheet alongside easier policy, arguing balance-sheet normalization need not tighten overall financial conditions if paired with changes that reduce structural reserve demand.",
+      "interpretation": "Dovish because he framed balance-sheet runoff as compatible with easier overall policy rather than tighter conditions. The read would turn less dovish if later remarks shift toward inflation persistence, reserve scarcity, or the need to keep policy restrictive.",
+      "expectedImpact": "USD bearish, weak to moderate, intraday to short-term.",
+      "sourceLabel": "Reuters-cited market coverage",
+      "sourceUrl": "https://m.economictimes.com/markets/us-stocks/news/us-stock-market-feds-miran-lays-out-roadmap-for-smaller-balance-sheet-easier-policy/articleshow/129838223.cms"
+    },
+    {
+      "date": "2026-03-27",
+      "currency": "EUR",
+      "bank": "European Central Bank",
+      "member": "Isabel Schnabel",
+      "roleTitle": "Member of the Executive Board, ECB",
+      "communicationType": "Guest lecture at the University of Zurich",
+      "status": "Scheduled",
+      "tone": "Unknown",
+      "quoteSummary": "The ECB weekly schedule lists a 17:00 CET guest lecture by Schnabel in Zurich, noting that slides will be made available and the event can be followed live. At the time of the snapshot, no policy text had been published.",
+      "interpretation": "Scheduled only, so there is no defensible hawkish or dovish classification yet. Watch for comments on energy-shock persistence, inflation expectations, or the ECB reaction function.",
+      "expectedImpact": "EUR impact low unless live headlines or slides deliver fresh policy language; intraday.",
+      "sourceLabel": "ECB weekly schedule",
+      "sourceUrl": "https://www.ecb.europa.eu/press/calendars/weekly/html/index.cs.html"
+    }
+  ],
+  "sources": [
+    {
+      "label": "ECB weekly schedule of public speaking engagements",
+      "url": "https://www.ecb.europa.eu/press/calendars/weekly/html/index.cs.html",
+      "note": "Used for March 27, 2026 official ECB scheduling, including the Isabel Schnabel Zurich lecture."
+    },
+    {
+      "label": "Economic Times article carrying Reuters-cited Miran remarks",
+      "url": "https://m.economictimes.com/markets/us-stocks/news/us-stock-market-feds-miran-lays-out-roadmap-for-smaller-balance-sheet-easier-policy/articleshow/129838223.cms",
+      "note": "Used because no same-day official Fed transcript was available at snapshot time."
+    }
+  ]
+}
