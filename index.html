@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central Bank Signal Desk</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Daily macro surveillance</p>
+        <h1>Central Bank Signal Desk</h1>
+        <p class="hero-text">
+          A daily monitor for same-day Fed, ECB, BoJ, RBNZ, RBA, SNB, BoC, and BoE communication,
+          organized for trader-grade review.
+        </p>
+      </div>
+      <aside class="hero-panel">
+        <div class="hero-panel-label">Next refresh</div>
+        <div class="hero-panel-value" id="next-refresh">Waiting for schedule</div>
+        <div class="hero-panel-meta" id="last-run">No report loaded yet</div>
+      </aside>
+    </header>
+
+    <main class="dashboard">
+      <section class="summary-grid" id="summary-grid"></section>
+
+      <section class="control-panel">
+        <div class="prompt-card">
+          <div class="section-label">Monitoring prompt</div>
+          <details>
+            <summary>Show the source prompt used for daily refresh</summary>
+            <pre id="prompt-text" class="prompt-text"></pre>
+          </details>
+        </div>
+
+        <div class="filters-card">
+          <div class="section-label">Filters</div>
+          <div class="filters-row" id="currency-filters"></div>
+          <div class="filters-row" id="tone-filters"></div>
+          <div class="filters-row" id="status-filters"></div>
+          <label class="search-field">
+            <span>Search members, roles, or cues</span>
+            <input id="search-input" type="search" placeholder="Try Powell, inflation, Reuters, Zurich">
+          </label>
+        </div>
+      </section>
+
+      <section class="board-section">
+        <div class="board-header">
+          <div>
+            <div class="section-label">Tone drift</div>
+            <h2>Tone over time</h2>
+          </div>
+          <div class="board-meta" id="chart-meta"></div>
+        </div>
+        <div class="chart-legend" id="chart-legend"></div>
+        <div class="chart-wrap" id="tone-chart"></div>
+      </section>
+
+      <section class="board-section">
+        <div class="board-header">
+          <div>
+            <div class="section-label">Communication board</div>
+            <h2 id="board-title">Daily flow</h2>
+          </div>
+          <div class="board-meta" id="board-meta"></div>
+        </div>
+        <div class="cards-grid" id="cards-grid"></div>
+      </section>
+
+      <section class="table-section">
+        <div class="section-label">Strict table view</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Currency</th>
+                <th>Member</th>
+                <th>Role/Title</th>
+                <th>Communication Type</th>
+                <th>Status</th>
+                <th>Tone</th>
+                <th>Quote/Summary</th>
+                <th>Interpretation</th>
+                <th>Expected Impact</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="source-section">
+        <div class="section-label">Source log</div>
+        <ul class="source-list" id="source-list"></ul>
+      </section>
+    </main>
+  </div>
+
+  <script src="./data/report.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
