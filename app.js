@@ -39,6 +39,70 @@
 
   let data = null;
 
+  const buildEntryKey = (entry) =>
+    [
+      entry.date,
+      entry.currency,
+      entry.member,
+      entry.communicationType,
+      entry.status
+    ]
+      .join("::")
+      .toLowerCase();
+
+  const mergeDataSets = (baseData, historyData) => {
+    if (!historyData?.entries?.length) {
+      return { ...baseData, importedHistoryCount: 0 };
+    }
+
+    const entryMap = new Map();
+    historyData.entries.forEach((entry) => {
+      entryMap.set(buildEntryKey(entry), entry);
+    });
+    baseData.entries.forEach((entry) => {
+      entryMap.set(buildEntryKey(entry), entry);
+    });
+
+    const sourceMap = new Map();
+    [...(historyData.sources || []), ...(baseData.sources || [])].forEach((source) => {
+      if (!source?.url) {
+        return;
+      }
+
+      sourceMap.set(source.url, source);
+    });
+
+    const entries = [...entryMap.values()].sort((left, right) => {
+      if (left.date !== right.date) {
+        return left.date.localeCompare(right.date);
+      }
+      if (left.currency !== right.currency) {
+        return left.currency.localeCompare(right.currency);
+      }
+      if (left.member !== right.member) {
+        return left.member.localeCompare(right.member);
+      }
+      return left.communicationType.localeCompare(right.communicationType);
+    });
+
+    const sources = [...sourceMap.values()].sort((left, right) => left.label.localeCompare(right.label));
+
+    return {
+      ...baseData,
+      entries,
+      sources,
+      importedHistoryCount: historyData.entries.length
+    };
+  };
+
+  const readImportedHistory = async () => {
+    if (window.CENTRAL_BANK_MONITOR_HISTORY_READY) {
+      await window.CENTRAL_BANK_MONITOR_HISTORY_READY;
+    }
+
+    return window.CENTRAL_BANK_MONITOR_HISTORY;
+  };
+
   const showFatalState = (message) => {
     document.body.innerHTML = `<main class="page-shell"><div class="empty-state">${message}</div></main>`;
   };
@@ -396,11 +460,13 @@
   };
 
   const loadData = async () => {
+    const historyData = await readImportedHistory();
+
     if (window.CENTRAL_BANK_MONITOR_DATA) {
-      data = window.CENTRAL_BANK_MONITOR_DATA;
+      data = mergeDataSets(window.CENTRAL_BANK_MONITOR_DATA, historyData);
       promptText.textContent = data.prompt || "Prompt unavailable";
       nextRefresh.textContent = data.schedule?.label || "Schedule unavailable";
-      lastRun.textContent = `Last generated ${formatDateTime(data.generatedAt)} | ${data.runStatus || "No status available"}`;
+      lastRun.textContent = `Last generated ${formatDateTime(data.generatedAt)} | ${data.runStatus || "No status available"}${data.importedHistoryCount ? ` | ${data.importedHistoryCount} Notion history rows merged` : ""}`;
       initializeFilters();
       renderSources();
       render();
@@ -418,9 +484,11 @@
       return;
     }
 
+    data = mergeDataSets(data, historyData);
+
     promptText.textContent = data.prompt || "Prompt unavailable";
     nextRefresh.textContent = data.schedule?.label || "Schedule unavailable";
-    lastRun.textContent = `Last generated ${formatDateTime(data.generatedAt)} | ${data.runStatus || "No status available"}`;
+    lastRun.textContent = `Last generated ${formatDateTime(data.generatedAt)} | ${data.runStatus || "No status available"}${data.importedHistoryCount ? ` | ${data.importedHistoryCount} Notion history rows merged` : ""}`;
 
     initializeFilters();
     renderSources();
