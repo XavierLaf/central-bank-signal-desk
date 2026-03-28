@@ -9,7 +9,7 @@ const reportJsPath = path.join(rootDir, "data", "report.js");
 const promptPath = path.join(rootDir, "config", "monitor-prompt.md");
 
 const COVERED_CURRENCIES = ["USD", "EUR", "JPY", "NZD", "AUD", "CHF", "CAD", "GBP"];
-const VALID_TONES = new Set(["Hawkish", "Neutral", "Dovish", "Unknown"]);
+const VALID_TONES = new Set(["Hawkish", "Neutral", "Dovish"]);
 const VALID_STATUSES = new Set(["Scheduled", "Live", "Published"]);
 
 const timezone = process.env.OPENAI_TIMEZONE || "America/Toronto";
@@ -48,7 +48,7 @@ function normalizeText(value, fallback = "") {
 }
 
 function normalizeEntry(entry, fallbackDate) {
-  const normalizedTone = VALID_TONES.has(entry?.tone) ? entry.tone : "Unknown";
+  const normalizedTone = VALID_TONES.has(entry?.tone) ? entry.tone : "";
   const normalizedStatus = VALID_STATUSES.has(entry?.status) ? entry.status : "Published";
 
   return {
@@ -184,7 +184,7 @@ function buildSchema() {
             roleTitle: { type: "string" },
             communicationType: { type: "string" },
             status: { type: "string", enum: ["Scheduled", "Live", "Published"] },
-            tone: { type: "string", enum: ["Hawkish", "Neutral", "Dovish", "Unknown"] },
+            tone: { type: "string", enum: ["Hawkish", "Neutral", "Dovish"] },
             quoteSummary: { type: "string" },
             interpretation: { type: "string" },
             expectedImpact: { type: "string" },
@@ -221,7 +221,7 @@ async function fetchDailySnapshot(prompt, targetDate, existingEntriesForToday) {
     "Use live newswire flow first, official central bank sources second, and event schedules third.",
     "Return only JSON matching the provided schema.",
     "Do not invent communications or quotes.",
-    "If a communication is only scheduled and no wording exists yet, keep status as Scheduled and tone as Unknown.",
+    "If a communication is only scheduled or there is not enough wording to defend a Hawkish, Neutral, or Dovish read, omit it from the output.",
     "Merge duplicate coverage into one best entry and keep the most complete source wording available.",
     "Prefer direct official URLs or original article URLs for sourceUrl."
   ].join(" ");
@@ -320,11 +320,14 @@ async function main() {
     .map((entry) => normalizeEntry(entry, targetDate))
     .filter((entry) => entry.date === targetDate)
     .filter((entry) => COVERED_CURRENCIES.includes(entry.currency))
+    .filter((entry) => entry.tone !== "Unknown")
     .filter(isEntryComplete);
 
   const historicalEntries = (existingReport.entries || []).filter((entry) => entry.date !== targetDate);
   const entries = dedupeEntries([...historicalEntries, ...normalizedNewEntries]);
-  const sources = dedupeSources([...(existingReport.sources || []), ...(snapshot.sources || [])]);
+  const referencedSourceUrls = new Set(entries.map((entry) => entry.sourceUrl));
+  const sources = dedupeSources([...(existingReport.sources || []), ...(snapshot.sources || [])])
+    .filter((source) => referencedSourceUrls.has(source.url));
 
   const report = {
     targetDate,

@@ -30,8 +30,7 @@
   const toneScoreMap = {
     Dovish: -1,
     Neutral: 0,
-    Hawkish: 1,
-    Unknown: 0
+    Hawkish: 1
   };
 
   const currencyColorMap = {
@@ -202,16 +201,40 @@
     return parsed;
   };
 
+  const startOfWeek = (date) => {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const day = start.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + diff);
+    return start;
+  };
+
+  const addDays = (date, amount) => {
+    const next = new Date(date);
+    next.setDate(next.getDate() + amount);
+    return next;
+  };
+
+  const endOfDay = (date) => {
+    const next = new Date(date);
+    next.setHours(23, 59, 59, 999);
+    return next;
+  };
+
   const mergeDataSets = (baseData, historyData) => {
+    const actionableBaseEntries = (baseData.entries || []).filter((entry) => entry.tone !== "Unknown");
+    const actionableHistoryEntries = (historyData?.entries || []).filter((entry) => entry.tone !== "Unknown");
+
     if (!historyData?.entries?.length) {
-      return { ...baseData, importedHistoryCount: 0 };
+      return { ...baseData, entries: actionableBaseEntries, importedHistoryCount: 0 };
     }
 
     const entryMap = new Map();
-    historyData.entries.forEach((entry) => {
+    actionableHistoryEntries.forEach((entry) => {
       entryMap.set(buildEntryKey(entry), entry);
     });
-    baseData.entries.forEach((entry) => {
+    actionableBaseEntries.forEach((entry) => {
       entryMap.set(buildEntryKey(entry), entry);
     });
 
@@ -243,7 +266,7 @@
       ...baseData,
       entries,
       sources,
-      importedHistoryCount: historyData.entries.length
+      importedHistoryCount: actionableHistoryEntries.length
     };
   };
 
@@ -483,6 +506,7 @@
     const todaysCurrencies = [...new Set(
       data.entries
         .filter((entry) => entry.date === data.targetDate)
+        .filter((entry) => entry.tone !== "Unknown")
         .map((entry) => entry.currency)
     )].sort();
     const cards = [
@@ -674,11 +698,8 @@
 
     const pointMarkup = positionedEntries
       .map((entry) => {
-        const isUnknown = entry.tone === "Unknown";
         const y = yForScore(entry.score);
         const color = lineColor;
-        const fill = isUnknown ? "#fffaf4" : color;
-        const strokeWidth = isUnknown ? 3 : 2;
         const title = [
           `${entry.date} | ${entry.currency}`,
           `${entry.member} | ${entry.tone}`,
@@ -687,7 +708,7 @@
         ].join("\n");
 
         return `
-          <circle cx="${entry.x}" cy="${y}" r="7" fill="${fill}" stroke="${color}" stroke-width="${strokeWidth}">
+          <circle cx="${entry.x}" cy="${y}" r="7" fill="${color}" stroke="${color}" stroke-width="2">
             <title>${title}</title>
           </circle>
         `;

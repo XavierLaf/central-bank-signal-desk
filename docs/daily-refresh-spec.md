@@ -61,7 +61,7 @@ Each object in `entries` must include:
 
 - Only add market-relevant same-day communication
 - Merge duplicate reporting into one entry
-- Use `Unknown` tone when an event is only scheduled and no wording is available
+- Omit events when there is not enough wording to defend a Hawkish, Neutral, or Dovish read
 - Keep all strings readable in the dashboard
 - Use real URLs in `sources` and `sourceUrl`
 - Upsert by same-day identity rather than duplicating prior rows

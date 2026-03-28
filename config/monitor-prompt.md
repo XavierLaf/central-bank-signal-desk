@@ -82,11 +82,10 @@ Tone must be exactly:
 - Hawkish
 - Neutral
 - Dovish
-- Unknown
 
 Rules:
 - Use Hawkish/Dovish only if wording supports it
-- If only scheduled, use Unknown
+- If only scheduled or there is not enough wording to defend a tone, omit it
 - If mixed signals, choose the dominant bias
 
 OUTPUT FORMAT
