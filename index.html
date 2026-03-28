@@ -28,23 +28,9 @@
       <section class="summary-grid" id="summary-grid"></section>
 
       <section class="control-panel">
-        <div class="filters-card">
-          <div class="section-label">Filters</div>
-          <div class="filters-block">
-            <div class="filters-label">Week</div>
-            <label class="filters-select">
-              <span>Select a calendar week</span>
-              <select id="week-select"></select>
-            </label>
-          </div>
-          <div class="filters-block">
-            <div class="filters-label">Currency</div>
-            <div class="filters-row" id="currency-filters"></div>
-          </div>
-          <label class="search-field">
-            <span>Search members, roles, or cues</span>
-            <input id="search-input" type="search" placeholder="Try Powell, inflation, Reuters, Zurich">
-          </label>
+        <div class="filters-card filters-card-currency">
+          <div class="section-label">Currency</div>
+          <div class="filters-row" id="currency-filters"></div>
         </div>
       </section>
 
@@ -64,6 +50,23 @@
         </div>
         <div class="policy-meta-grid" id="policy-meta-grid"></div>
         <div class="chart-wrap" id="tone-chart"></div>
+      </section>
+
+      <section class="control-panel control-panel-secondary">
+        <div class="filters-card filters-card-board">
+          <div class="section-label">Board filters</div>
+          <div class="filters-block">
+            <div class="filters-label">Week</div>
+            <label class="filters-select">
+              <span>Select a calendar week</span>
+              <select id="week-select"></select>
+            </label>
+          </div>
+          <label class="search-field">
+            <span>Search members, roles, or cues</span>
+            <input id="search-input" type="search" placeholder="Try Powell, inflation, Reuters, Zurich">
+          </label>
+        </div>
       </section>
 
       <section class="board-section">

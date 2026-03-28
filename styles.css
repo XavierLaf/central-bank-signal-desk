@@ -241,6 +241,10 @@ h1 {
   display: block;
 }
 
+.control-panel-secondary {
+  margin-top: -4px;
+}
+
 .filters-card,
 .board-section,
 .table-section,
@@ -252,6 +256,14 @@ h1 {
 .filters-card {
   display: grid;
   gap: 14px;
+}
+
+.filters-card-currency .filters-row {
+  margin-top: 4px;
+}
+
+.filters-card-board {
+  max-width: 560px;
 }
 
 .filters-block {
