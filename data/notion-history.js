@@ -13,20 +13,23 @@
     return bytes;
   };
 
-  const inflateHistorySource = async () => {
-    if (!("DecompressionStream" in window)) {
-      throw new Error("This browser does not support gzip decompression for the Notion history import.");
+  const inflateHistorySource = () => {
+    if (!window.fflate?.gunzipSync) {
+      throw new Error("The fflate runtime did not load, so the Notion history import could not be decompressed.");
     }
 
     const compressedBytes = decodeBase64(compressedSource);
-    const stream = new Blob([compressedBytes]).stream().pipeThrough(new DecompressionStream("gzip"));
-    const source = await new Response(stream).text();
+    const sourceBytes = window.fflate.gunzipSync(compressedBytes);
+    const source = new TextDecoder().decode(sourceBytes);
 
     (0, eval)(source);
+    return window.CENTRAL_BANK_MONITOR_HISTORY;
   };
 
-  window.CENTRAL_BANK_MONITOR_HISTORY_READY = inflateHistorySource().catch((error) => {
+  try {
+    window.CENTRAL_BANK_MONITOR_HISTORY_READY = Promise.resolve(inflateHistorySource());
+  } catch (error) {
     console.error("Unable to load Notion history import.", error);
-    return null;
-  });
+    window.CENTRAL_BANK_MONITOR_HISTORY_READY = Promise.resolve(null);
+  }
 })();
