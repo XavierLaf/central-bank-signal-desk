@@ -3,7 +3,8 @@
     week: "THIS_WEEK",
     currency: "USD",
     search: "",
-    timezone: "America/Toronto"
+    timezone: "America/Toronto",
+    chartWindowSelections: {}
   };
 
   const summaryGrid = document.getElementById("summary-grid");
@@ -14,7 +15,8 @@
   const boardTitle = document.getElementById("board-title");
   const boardMeta = document.getElementById("board-meta");
   const chartMeta = document.getElementById("chart-meta");
-  const chartLegend = document.getElementById("chart-legend");
+  const chartWindowSelect = document.getElementById("chart-window-select");
+  const policyMetaGrid = document.getElementById("policy-meta-grid");
   const toneChart = document.getElementById("tone-chart");
   const sourceList = document.getElementById("source-list");
   const searchInput = document.getElementById("search-input");
@@ -46,6 +48,137 @@
     CHF: "#e3e3e3",
     CAD: "#9c8b58",
     GBP: "#b6a06a"
+  };
+
+  const policyWindowMap = {
+    USD: [
+      {
+        id: "2026-03-18",
+        previousDecisionDate: "2026-03-18",
+        nextDecisionDate: "2026-04-29",
+        rateDisplay: "3.50%-3.75%",
+        moveSummary: "Stayed at 3.50%-3.75%"
+      },
+      {
+        id: "2026-01-28",
+        previousDecisionDate: "2026-01-28",
+        nextDecisionDate: "2026-03-18",
+        rateDisplay: "3.50%-3.75%",
+        moveSummary: "Stayed at 3.50%-3.75%"
+      }
+    ],
+    EUR: [
+      {
+        id: "2026-03-19",
+        previousDecisionDate: "2026-03-19",
+        nextDecisionDate: "2026-04-30",
+        rateDisplay: "2.00%",
+        moveSummary: "Stayed at 2.00%"
+      },
+      {
+        id: "2026-02-05",
+        previousDecisionDate: "2026-02-05",
+        nextDecisionDate: "2026-03-19",
+        rateDisplay: "2.00%",
+        moveSummary: "Stayed at 2.00%"
+      }
+    ],
+    JPY: [
+      {
+        id: "2026-03-19",
+        previousDecisionDate: "2026-03-19",
+        nextDecisionDate: "2026-04-28",
+        rateDisplay: "0.75%",
+        moveSummary: "Stayed at 0.75%"
+      },
+      {
+        id: "2026-01-23",
+        previousDecisionDate: "2026-01-23",
+        nextDecisionDate: "2026-03-19",
+        rateDisplay: "0.75%",
+        moveSummary: "Stayed at 0.75%"
+      }
+    ],
+    NZD: [
+      {
+        id: "2026-02-18",
+        previousDecisionDate: "2026-02-18",
+        nextDecisionDate: "2026-04-08",
+        rateDisplay: "2.25%",
+        moveSummary: "Stayed at 2.25%"
+      },
+      {
+        id: "2025-11-26",
+        previousDecisionDate: "2025-11-26",
+        nextDecisionDate: "2026-02-18",
+        rateDisplay: "2.25%",
+        moveSummary: "Down from 2.50% to 2.25%"
+      }
+    ],
+    AUD: [
+      {
+        id: "2026-03-17",
+        previousDecisionDate: "2026-03-17",
+        nextDecisionDate: "2026-05-05",
+        rateDisplay: "4.10%",
+        moveSummary: "Up from 3.85% to 4.10%"
+      },
+      {
+        id: "2026-02-03",
+        previousDecisionDate: "2026-02-03",
+        nextDecisionDate: "2026-03-17",
+        rateDisplay: "3.85%",
+        moveSummary: "Up from 3.60% to 3.85%"
+      }
+    ],
+    CHF: [
+      {
+        id: "2026-03-19",
+        previousDecisionDate: "2026-03-19",
+        nextDecisionDate: "2026-06-18",
+        rateDisplay: "0.00%",
+        moveSummary: "Stayed at 0.00%"
+      },
+      {
+        id: "2025-12-11",
+        previousDecisionDate: "2025-12-11",
+        nextDecisionDate: "2026-03-19",
+        rateDisplay: "0.00%",
+        moveSummary: "Stayed at 0.00%"
+      }
+    ],
+    CAD: [
+      {
+        id: "2026-03-18",
+        previousDecisionDate: "2026-03-18",
+        nextDecisionDate: "2026-04-29",
+        rateDisplay: "2.25%",
+        moveSummary: "Stayed at 2.25%"
+      },
+      {
+        id: "2026-01-28",
+        previousDecisionDate: "2026-01-28",
+        nextDecisionDate: "2026-03-18",
+        rateDisplay: "2.25%",
+        moveSummary: "Stayed at 2.25%"
+      }
+    ],
+    GBP: [
+      {
+        id: "2026-03-19",
+        previousDecisionDate: "2026-03-19",
+        nextDecisionDate: "2026-04-30",
+        rateDisplay: "3.75%",
+        moveSummary: "Stayed at 3.75%"
+      },
+      {
+        id: "2026-02-05",
+        previousDecisionDate: "2026-02-05",
+        nextDecisionDate: "2026-03-19",
+        rateDisplay: "3.75%",
+        moveSummary: "Stayed at 3.75%"
+      }
+    ]
   };
 
   let data = null;
@@ -273,6 +406,118 @@
     }).format(parsed);
   };
 
+  const formatCalendarDate = (value) => {
+    const parsed = parseEntryDate(value);
+    if (!parsed) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat("en-CA", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    }).format(parsed);
+  };
+
+  const getPolicyWindowsForCurrency = (currency) => policyWindowMap[currency] || [];
+
+  const ensureChartWindowSelection = (currency) => {
+    const windows = getPolicyWindowsForCurrency(currency);
+    if (!windows.length) {
+      delete state.chartWindowSelections[currency];
+      return null;
+    }
+
+    const selectedId = state.chartWindowSelections[currency];
+    const matchedWindow = windows.find((window) => window.id === selectedId);
+    if (matchedWindow) {
+      return matchedWindow;
+    }
+
+    state.chartWindowSelections[currency] = windows[0].id;
+    return windows[0];
+  };
+
+  const getSelectedChartWindow = () => ensureChartWindowSelection(state.currency);
+
+  const getChartEntries = () => {
+    const selectedWindow = getSelectedChartWindow();
+    if (!selectedWindow) {
+      return [];
+    }
+
+    return data.entries
+      .filter((entry) => entry.currency === state.currency)
+      .filter((entry) => {
+        const entryDate = parseEntryDate(entry.date);
+        const startDate = parseEntryDate(selectedWindow.previousDecisionDate);
+        const endDate = parseEntryDate(selectedWindow.nextDecisionDate);
+
+        if (!entryDate || !startDate || !endDate) {
+          return false;
+        }
+
+        return entryDate >= startDate && entryDate <= endDate;
+      })
+      .sort((left, right) => {
+        if (left.date !== right.date) {
+          return left.date.localeCompare(right.date);
+        }
+
+        return left.member.localeCompare(right.member);
+      });
+  };
+
+  const formatChartWindowLabel = (window) =>
+    `${formatCalendarDate(window.previousDecisionDate)} to ${formatCalendarDate(window.nextDecisionDate)} | ${window.moveSummary}`;
+
+  const renderChartWindowControls = (selectedWindow) => {
+    const windows = getPolicyWindowsForCurrency(state.currency);
+    chartWindowSelect.innerHTML = windows
+      .map(
+        (window) =>
+          `<option value="${window.id}"${window.id === selectedWindow?.id ? " selected" : ""}>${formatChartWindowLabel(window)}</option>`
+      )
+      .join("");
+  };
+
+  const renderPolicyMeta = (selectedWindow) => {
+    if (!selectedWindow) {
+      policyMetaGrid.innerHTML = "<div class='empty-state'>No policy decision range is configured for this currency yet.</div>";
+      return;
+    }
+
+    const cards = [
+      {
+        title: "Previous decision",
+        value: formatCalendarDate(selectedWindow.previousDecisionDate),
+        subtext: "Most recent rate-setting meeting for the selected window."
+      },
+      {
+        title: "Rate decided",
+        value: selectedWindow.rateDisplay,
+        subtext: selectedWindow.moveSummary
+      },
+      {
+        title: "Next decision",
+        value: formatCalendarDate(selectedWindow.nextDecisionDate),
+        subtext: "Next scheduled policy decision date."
+      }
+    ];
+
+    policyMetaGrid.innerHTML = cards
+      .map(
+        (card) => `
+          <article class="policy-card">
+            <div class="summary-title">${card.title}</div>
+            <div class="policy-value">${card.value}</div>
+            <div class="policy-subtext">${card.subtext}</div>
+          </article>
+        `
+      )
+      .join("");
+  };
+
   const renderHeaderMeta = () => {
     nextRefresh.textContent = data.schedule?.label || "Schedule unavailable";
     lastRun.textContent = `Last generated ${formatDateTime(data.generatedAt)} | ${formatTimezoneLabel(
@@ -287,6 +532,9 @@
     button.textContent = label;
     button.addEventListener("click", () => {
       state[group] = value;
+      if (group === "currency") {
+        ensureChartWindowSelection(value);
+      }
       render();
     });
     return button;
@@ -400,7 +648,7 @@
             ${card.currencies.length
               ? card.currencies
                   .map((currency) => `<span class="summary-currency-chip">${currency}</span>`)
-                  .join("")
+                  .join("") 
               : "<span class=\"summary-currency-empty\">No new central bank communication today.</span>"}
           </div>
         `;
@@ -425,59 +673,53 @@
   };
 
   const renderChart = () => {
-    const entries = filteredEntries().slice().sort((left, right) => {
-      if (left.date !== right.date) {
-        return left.date.localeCompare(right.date);
-      }
-      if (left.currency !== right.currency) {
-        return left.currency.localeCompare(right.currency);
-      }
-      return left.member.localeCompare(right.member);
-    });
-
-    chartLegend.innerHTML = "";
+    const selectedWindow = getSelectedChartWindow();
+    const entries = getChartEntries();
     toneChart.innerHTML = "";
+    renderChartWindowControls(selectedWindow);
+    renderPolicyMeta(selectedWindow);
 
-    if (!entries.length) {
-      chartMeta.textContent = "No chartable entries after filters";
-      toneChart.innerHTML = "<div class='empty-state'>No tone history is available for the current filter set.</div>";
+    if (!selectedWindow) {
+      chartMeta.textContent = "No policy window is configured for this currency";
+      toneChart.innerHTML = "<div class='empty-state'>Add a policy decision range to display the tone path for this currency.</div>";
       return;
     }
 
-    chartMeta.textContent = "Scale runs from Dovish (-1) to Hawkish (+1). Hollow markers indicate Unknown tone.";
+    chartMeta.textContent = `${selectedWindow.moveSummary} | Previous decision ${formatCalendarDate(
+      selectedWindow.previousDecisionDate
+    )} | Next decision ${formatCalendarDate(selectedWindow.nextDecisionDate)}`;
 
-    const currencies = [...new Set(entries.map((entry) => entry.currency))];
-    currencies.forEach((currency) => {
-      const item = document.createElement("div");
-      item.className = "legend-item";
-      item.innerHTML = `
-        <span class="legend-swatch" style="background:${currencyColorMap[currency] || "#1e2430"}"></span>
-        <span>${currency}</span>
-      `;
-      chartLegend.appendChild(item);
-    });
+    if (!entries.length) {
+      toneChart.innerHTML = `<div class='empty-state'>No communication has been captured for ${state.currency} in this policy-decision window yet.</div>`;
+      return;
+    }
 
     const width = 1040;
     const height = 360;
     const margin = { top: 26, right: 28, bottom: 58, left: 78 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
-    const uniqueDates = [...new Set(entries.map((entry) => entry.date))];
-    const dateGroups = uniqueDates.map((date) => ({
+    const entryDates = [...new Set(entries.map((entry) => entry.date))];
+    const axisDates = [...new Set([
+      selectedWindow.previousDecisionDate,
+      ...entryDates,
+      selectedWindow.nextDecisionDate
+    ])].sort((left, right) => left.localeCompare(right));
+    const dateGroups = entryDates.map((date) => ({
       date,
       entries: entries.filter((entry) => entry.date === date)
     }));
 
     const getDateCenterX = (index) => {
-      if (uniqueDates.length === 1) {
+      if (axisDates.length === 1) {
         return margin.left + innerWidth / 2;
       }
-      return margin.left + (innerWidth * index) / (uniqueDates.length - 1);
+      return margin.left + (innerWidth * index) / (axisDates.length - 1);
     };
 
     const positionedEntries = [];
     dateGroups.forEach((group, groupIndex) => {
-      const baseX = getDateCenterX(groupIndex);
+      const baseX = getDateCenterX(axisDates.indexOf(group.date));
       const spacing = 18;
       const totalWidth = (group.entries.length - 1) * spacing;
       group.entries.forEach((entry, entryIndex) => {
@@ -495,13 +737,8 @@
       return margin.top + normalized * innerHeight;
     };
 
-    const linesByCurrency = currencies.map((currency) => ({
-      currency,
-      color: currencyColorMap[currency] || "#1e2430",
-      points: positionedEntries
-        .filter((entry) => entry.currency === currency)
-        .sort((left, right) => left.x - right.x)
-    }));
+    const lineColor = currencyColorMap[state.currency] || "#d4af37";
+    const linePoints = positionedEntries.slice().sort((left, right) => left.x - right.x);
 
     const bandHeight = innerHeight / 3;
     const bandTop = margin.top;
@@ -528,7 +765,7 @@
       })
       .join("");
 
-    const dateTicks = uniqueDates
+    const dateTicks = axisDates
       .map((date, index) => {
         const x = getDateCenterX(index);
         return `
@@ -538,19 +775,18 @@
       })
       .join("");
 
-    const lineMarkup = linesByCurrency
-      .filter((line) => line.points.length > 1)
-      .map((line) => {
-        const points = line.points.map((point) => `${point.x},${yForScore(point.score)}`).join(" ");
-        return `<polyline class="chart-line" stroke="${line.color}" points="${points}"></polyline>`;
-      })
-      .join("");
+    const lineMarkup =
+      linePoints.length > 1
+        ? `<polyline class="chart-line" stroke="${lineColor}" points="${linePoints
+            .map((point) => `${point.x},${yForScore(point.score)}`)
+            .join(" ")}"></polyline>`
+        : "";
 
     const pointMarkup = positionedEntries
       .map((entry) => {
         const isUnknown = entry.tone === "Unknown";
         const y = yForScore(entry.score);
-        const color = currencyColorMap[entry.currency] || "#1e2430";
+        const color = lineColor;
         const fill = isUnknown ? "#fffaf4" : color;
         const strokeWidth = isUnknown ? 3 : 2;
         const title = [
@@ -568,11 +804,21 @@
       })
       .join("");
 
+    const startX = getDateCenterX(axisDates.indexOf(selectedWindow.previousDecisionDate));
+    const endX = getDateCenterX(axisDates.indexOf(selectedWindow.nextDecisionDate));
+    const boundaryMarkup = `
+      <line class="chart-boundary-line" x1="${startX}" y1="${margin.top}" x2="${startX}" y2="${height - margin.bottom}"></line>
+      <line class="chart-boundary-line" x1="${endX}" y1="${margin.top}" x2="${endX}" y2="${height - margin.bottom}"></line>
+      <text class="chart-boundary-label" x="${startX}" y="${margin.top - 8}" text-anchor="middle">Previous decision</text>
+      <text class="chart-boundary-label" x="${endX}" y="${margin.top - 8}" text-anchor="middle">Next decision</text>
+    `;
+
     toneChart.innerHTML = `
-      <div class="chart-caption">This chart reads each communication on a tone scale from dovish to hawkish and traces it through time using the same filtered dataset as the board below.</div>
+      <div class="chart-caption">${state.currency} communication is traced from the selected rate decision through the next scheduled decision. This chart is independent from the week filter and shows the full policy window.</div>
       <svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Tone over time chart">
         ${bandMarkup}
         ${yAxisLines}
+        ${boundaryMarkup}
         ${dateTicks}
         ${lineMarkup}
         ${pointMarkup}
@@ -687,6 +933,7 @@
       state.currency = data.entries.some((entry) => entry.currency === "USD")
         ? "USD"
         : [...new Set(data.entries.map((entry) => entry.currency))].sort()[0];
+      ensureChartWindowSelection(state.currency);
       state.timezone = resolveInitialTimezone();
       renderHeaderMeta();
       initializeFilters();
@@ -711,6 +958,7 @@
     state.currency = data.entries.some((entry) => entry.currency === "USD")
       ? "USD"
       : [...new Set(data.entries.map((entry) => entry.currency))].sort()[0];
+    ensureChartWindowSelection(state.currency);
     state.timezone = resolveInitialTimezone();
 
     renderHeaderMeta();
@@ -728,6 +976,11 @@
   weekSelect.addEventListener("change", (event) => {
     state.week = event.target.value;
     render();
+  });
+
+  chartWindowSelect.addEventListener("change", (event) => {
+    state.chartWindowSelections[state.currency] = event.target.value;
+    renderChart();
   });
 
   loadData();
