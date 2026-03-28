@@ -1,15 +1,12 @@
 (function () {
   const state = {
     week: "THIS_WEEK",
-    currency: "ALL",
-    tone: "ALL",
-    status: "ALL",
+    currency: "USD",
     search: "",
     timezone: "America/Toronto"
   };
 
   const summaryGrid = document.getElementById("summary-grid");
-  const promptText = document.getElementById("prompt-text");
   const nextRefresh = document.getElementById("next-refresh");
   const lastRun = document.getElementById("last-run");
   const cardsGrid = document.getElementById("cards-grid");
@@ -323,9 +320,7 @@
         !dateRange.start ||
         !entryDate ||
         (entryDate >= dateRange.start && entryDate <= dateRange.end);
-      const matchesCurrency = state.currency === "ALL" || entry.currency === state.currency;
-      const matchesTone = state.tone === "ALL" || entry.tone === state.tone;
-      const matchesStatus = state.status === "ALL" || entry.status === state.status;
+      const matchesCurrency = entry.currency === state.currency;
       const haystack = [
         entry.currency,
         entry.bank,
@@ -340,7 +335,7 @@
         .join(" ")
         .toLowerCase();
       const matchesSearch = !search || haystack.includes(search);
-      return matchesWeek && matchesCurrency && matchesTone && matchesStatus && matchesSearch;
+      return matchesWeek && matchesCurrency && matchesSearch;
     });
   };
 
@@ -570,8 +565,7 @@
   const renderBoard = () => {
     const entries = filteredEntries();
     const viewCopy = getViewCopy();
-    boardTitle.textContent =
-      state.currency === "ALL" ? viewCopy.title : `${state.currency} ${viewCopy.title.toLowerCase()}`;
+    boardTitle.textContent = `${state.currency} ${viewCopy.title.toLowerCase()}`;
     boardMeta.textContent = `${entries.length} item${entries.length === 1 ? "" : "s"} in ${viewCopy.meta} after filters`;
     cardsGrid.innerHTML = "";
 
@@ -657,17 +651,13 @@
 
   const initializeFilters = () => {
     const currencyValues = [...new Set(data.entries.map((entry) => entry.currency))].sort();
-    const toneValues = [...new Set(data.entries.map((entry) => entry.tone))];
-    const statusValues = [...new Set(data.entries.map((entry) => entry.status))];
     const weekOptions = buildWeekOptions();
 
     weekSelect.innerHTML = weekOptions
       .map((option) => `<option value="${option.value}">${option.label}</option>`)
       .join("");
     weekSelect.value = state.week;
-    renderFilterRow("currency-filters", currencyValues, "currency");
-    renderFilterRow("tone-filters", toneValues, "tone");
-    renderFilterRow("status-filters", statusValues, "status");
+    renderFilterRow("currency-filters", currencyValues, "currency", { includeAll: false });
   };
 
   const loadData = async () => {
@@ -676,8 +666,10 @@
     if (window.CENTRAL_BANK_MONITOR_DATA) {
       data = mergeDataSets(window.CENTRAL_BANK_MONITOR_DATA, historyData);
       state.week = getReferenceWeekKey();
+      state.currency = data.entries.some((entry) => entry.currency === "USD")
+        ? "USD"
+        : [...new Set(data.entries.map((entry) => entry.currency))].sort()[0];
       state.timezone = resolveInitialTimezone();
-      promptText.textContent = data.prompt || "Prompt unavailable";
       renderHeaderMeta();
       initializeFilters();
       renderSources();
@@ -698,9 +690,11 @@
 
     data = mergeDataSets(data, historyData);
     state.week = getReferenceWeekKey();
+    state.currency = data.entries.some((entry) => entry.currency === "USD")
+      ? "USD"
+      : [...new Set(data.entries.map((entry) => entry.currency))].sort()[0];
     state.timezone = resolveInitialTimezone();
 
-    promptText.textContent = data.prompt || "Prompt unavailable";
     renderHeaderMeta();
 
     initializeFilters();
