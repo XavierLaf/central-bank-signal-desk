@@ -1,5 +1,6 @@
 (function () {
   const state = {
+    week: "THIS_WEEK",
     currency: "ALL",
     tone: "ALL",
     status: "ALL",
@@ -19,6 +20,7 @@
   const toneChart = document.getElementById("tone-chart");
   const sourceList = document.getElementById("source-list");
   const searchInput = document.getElementById("search-input");
+  const weekSelect = document.getElementById("week-select");
   const toneScoreMap = {
     Dovish: -1,
     Neutral: 0,
@@ -49,6 +51,129 @@
     ]
       .join("::")
       .toLowerCase();
+
+  const parseEntryDate = (value) => {
+    if (!value) {
+      return null;
+    }
+
+    const parsed = new Date(`${value}T12:00:00`);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    return parsed;
+  };
+
+  const startOfWeek = (date) => {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const day = start.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + diff);
+    return start;
+  };
+
+  const addDays = (date, amount) => {
+    const next = new Date(date);
+    next.setDate(next.getDate() + amount);
+    return next;
+  };
+
+  const endOfDay = (date) => {
+    const next = new Date(date);
+    next.setHours(23, 59, 59, 999);
+    return next;
+  };
+
+  const getWeekKey = (date) => {
+    const weekStart = startOfWeek(date);
+    return weekStart.toISOString().slice(0, 10);
+  };
+
+  const getReferenceWeekKey = () => getWeekKey(parseEntryDate(data?.targetDate) || new Date());
+
+  const formatWeekLabel = (weekStartValue, referenceWeekKey) => {
+    const weekStart = parseEntryDate(weekStartValue);
+    if (!weekStart) {
+      return weekStartValue;
+    }
+
+    const weekEnd = addDays(weekStart, 6);
+    const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
+    const startMonth = new Intl.DateTimeFormat("en-CA", { month: "short" }).format(weekStart);
+    const endMonth = new Intl.DateTimeFormat("en-CA", { month: "short" }).format(weekEnd);
+    const startDay = weekStart.getDate();
+    const endDay = weekEnd.getDate();
+    const year = weekEnd.getFullYear();
+    const rangeLabel = sameMonth
+      ? `${startMonth} ${startDay}-${endDay}, ${year}`
+      : `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+
+    if (weekStartValue === referenceWeekKey) {
+      return `This week | ${rangeLabel}`;
+    }
+
+    return rangeLabel;
+  };
+
+  const buildWeekOptions = () => {
+    const referenceWeekKey = getReferenceWeekKey();
+    const weekKeys = [...new Set(data.entries.map((entry) => getWeekKey(parseEntryDate(entry.date) || new Date())))]
+      .sort((left, right) => right.localeCompare(left));
+
+    if (!weekKeys.includes(referenceWeekKey)) {
+      weekKeys.unshift(referenceWeekKey);
+    }
+
+    return [
+      ...weekKeys.map((weekKey) => ({
+        value: weekKey,
+        label: formatWeekLabel(weekKey, referenceWeekKey)
+      })),
+      { value: "ALL_TIME", label: "All history" }
+    ];
+  };
+
+  const createDateRange = () => {
+    if (state.week === "ALL_TIME") {
+      return {
+        start: null,
+        end: null,
+        label: "All history"
+      };
+    }
+
+    const weekStart = parseEntryDate(state.week) || startOfWeek(parseEntryDate(data?.targetDate) || new Date());
+
+    return {
+      start: weekStart,
+      end: endOfDay(addDays(weekStart, 6)),
+      label: formatWeekLabel(getWeekKey(weekStart), getReferenceWeekKey())
+    };
+  };
+
+  const getViewCopy = () => {
+    if (state.week === "ALL_TIME") {
+      return {
+        title: "Archive flow",
+        meta: "all history"
+      };
+    }
+
+    const weekLabel = createDateRange().label.replace("This week | ", "");
+    if (state.week === getReferenceWeekKey()) {
+      return {
+        title: "This week flow",
+        meta: "this week"
+      };
+    }
+
+    return {
+      title: `Week of ${weekLabel}`,
+      meta: `week of ${weekLabel}`
+    };
+  };
 
   const mergeDataSets = (baseData, historyData) => {
     if (!historyData?.entries?.length) {
@@ -136,18 +261,34 @@
     return button;
   };
 
-  const renderFilterRow = (containerId, values, group) => {
+  const renderFilterRow = (containerId, values, group, options = {}) => {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
-    container.appendChild(makeChip("All", "ALL", group, state[group]));
+    if (options.includeAll !== false) {
+      container.appendChild(makeChip(options.allLabel || "All", "ALL", group, state[group]));
+    }
     values.forEach((value) => {
-      container.appendChild(makeChip(value, value, group, state[group]));
+      if (typeof value === "string") {
+        container.appendChild(makeChip(value, value, group, state[group]));
+        return;
+      }
+
+      container.appendChild(
+        makeChip(value.label, value.value, group, state[group])
+      );
     });
   };
 
   const filteredEntries = () => {
     const search = state.search.trim().toLowerCase();
+    const dateRange = createDateRange();
+
     return data.entries.filter((entry) => {
+      const entryDate = parseEntryDate(entry.date);
+      const matchesWeek =
+        !dateRange.start ||
+        !entryDate ||
+        (entryDate >= dateRange.start && entryDate <= dateRange.end);
       const matchesCurrency = state.currency === "ALL" || entry.currency === state.currency;
       const matchesTone = state.tone === "ALL" || entry.tone === state.tone;
       const matchesStatus = state.status === "ALL" || entry.status === state.status;
@@ -165,21 +306,23 @@
         .join(" ")
         .toLowerCase();
       const matchesSearch = !search || haystack.includes(search);
-      return matchesCurrency && matchesTone && matchesStatus && matchesSearch;
+      return matchesWeek && matchesCurrency && matchesTone && matchesStatus && matchesSearch;
     });
   };
 
   const renderSummary = () => {
-    const currenciesWithSignal = new Set(data.entries.map((entry) => entry.currency)).size;
+    const entries = filteredEntries();
+    const currenciesWithSignal = new Set(entries.map((entry) => entry.currency)).size;
+    const rangeLabel = createDateRange().label;
     const cards = [
       {
-        title: "Snapshot date",
-        value: data.targetDate,
-        subtext: `Evaluated in ${data.timezone}`
+        title: "View window",
+        value: rangeLabel,
+        subtext: `Anchored to ${data.targetDate} in ${data.timezone}`
       },
       {
         title: "Qualified communications",
-        value: String(data.entries.length),
+        value: String(entries.length),
         subtext: `${currenciesWithSignal} currencies with signal`
       },
       {
@@ -365,8 +508,10 @@
 
   const renderBoard = () => {
     const entries = filteredEntries();
-    boardTitle.textContent = state.currency === "ALL" ? "Daily flow" : `${state.currency} flow`;
-    boardMeta.textContent = `${entries.length} item${entries.length === 1 ? "" : "s"} after filters`;
+    const viewCopy = getViewCopy();
+    boardTitle.textContent =
+      state.currency === "ALL" ? viewCopy.title : `${state.currency} ${viewCopy.title.toLowerCase()}`;
+    boardMeta.textContent = `${entries.length} item${entries.length === 1 ? "" : "s"} in ${viewCopy.meta} after filters`;
     cardsGrid.innerHTML = "";
 
     if (!entries.length) {
@@ -453,7 +598,12 @@
     const currencyValues = [...new Set(data.entries.map((entry) => entry.currency))].sort();
     const toneValues = [...new Set(data.entries.map((entry) => entry.tone))];
     const statusValues = [...new Set(data.entries.map((entry) => entry.status))];
+    const weekOptions = buildWeekOptions();
 
+    weekSelect.innerHTML = weekOptions
+      .map((option) => `<option value="${option.value}">${option.label}</option>`)
+      .join("");
+    weekSelect.value = state.week;
     renderFilterRow("currency-filters", currencyValues, "currency");
     renderFilterRow("tone-filters", toneValues, "tone");
     renderFilterRow("status-filters", statusValues, "status");
@@ -464,6 +614,7 @@
 
     if (window.CENTRAL_BANK_MONITOR_DATA) {
       data = mergeDataSets(window.CENTRAL_BANK_MONITOR_DATA, historyData);
+      state.week = getReferenceWeekKey();
       promptText.textContent = data.prompt || "Prompt unavailable";
       nextRefresh.textContent = data.schedule?.label || "Schedule unavailable";
       lastRun.textContent = `Last generated ${formatDateTime(data.generatedAt)} | ${data.runStatus || "No status available"}${data.importedHistoryCount ? ` | ${data.importedHistoryCount} Notion history rows merged` : ""}`;
@@ -485,6 +636,7 @@
     }
 
     data = mergeDataSets(data, historyData);
+    state.week = getReferenceWeekKey();
 
     promptText.textContent = data.prompt || "Prompt unavailable";
     nextRefresh.textContent = data.schedule?.label || "Schedule unavailable";
@@ -497,6 +649,11 @@
 
   searchInput.addEventListener("input", (event) => {
     state.search = event.target.value;
+    render();
+  });
+
+  weekSelect.addEventListener("change", (event) => {
+    state.week = event.target.value;
     render();
   });
 

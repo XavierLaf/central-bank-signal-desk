@@ -38,9 +38,25 @@
 
         <div class="filters-card">
           <div class="section-label">Filters</div>
-          <div class="filters-row" id="currency-filters"></div>
-          <div class="filters-row" id="tone-filters"></div>
-          <div class="filters-row" id="status-filters"></div>
+          <div class="filters-block">
+            <div class="filters-label">Week</div>
+            <label class="filters-select">
+              <span>Select a calendar week</span>
+              <select id="week-select"></select>
+            </label>
+          </div>
+          <div class="filters-block">
+            <div class="filters-label">Currency</div>
+            <div class="filters-row" id="currency-filters"></div>
+          </div>
+          <div class="filters-block">
+            <div class="filters-label">Tone</div>
+            <div class="filters-row" id="tone-filters"></div>
+          </div>
+          <div class="filters-block">
+            <div class="filters-label">Status</div>
+            <div class="filters-row" id="status-filters"></div>
+          </div>
           <label class="search-field">
             <span>Search members, roles, or cues</span>
             <input id="search-input" type="search" placeholder="Try Powell, inflation, Reuters, Zurich">

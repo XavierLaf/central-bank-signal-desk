@@ -227,10 +227,39 @@ h1 {
   gap: 14px;
 }
 
+.filters-block {
+  display: grid;
+  gap: 8px;
+}
+
+.filters-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .filters-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.filters-select {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.filters-select select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink);
+  font: inherit;
 }
 
 .chip {
