@@ -31,6 +31,10 @@
         <div class="filters-card filters-card-currency">
           <div class="section-label">Currency</div>
           <div class="filters-row" id="currency-filters"></div>
+          <label class="chart-select-field chart-select-field-inline">
+            <span>Policy decision range</span>
+            <select id="chart-window-select"></select>
+          </label>
         </div>
       </section>
 
@@ -42,12 +46,6 @@
           </div>
           <div class="board-meta" id="chart-meta"></div>
         </div>
-        <div class="chart-controls">
-          <label class="chart-select-field">
-            <span>Policy decision range</span>
-            <select id="chart-window-select"></select>
-          </label>
-        </div>
         <div class="policy-meta-grid" id="policy-meta-grid"></div>
         <div class="chart-wrap" id="tone-chart"></div>
       </section>
@@ -55,29 +53,11 @@
       <section class="control-panel control-panel-secondary">
         <div class="filters-card filters-card-board">
           <div class="section-label">Board filters</div>
-          <div class="filters-block">
-            <div class="filters-label">Week</div>
-            <label class="filters-select">
-              <span>Select a calendar week</span>
-              <select id="week-select"></select>
-            </label>
-          </div>
           <label class="search-field">
             <span>Search members, roles, or cues</span>
             <input id="search-input" type="search" placeholder="Try Powell, inflation, Reuters, Zurich">
           </label>
         </div>
-      </section>
-
-      <section class="board-section">
-        <div class="board-header">
-          <div>
-            <div class="section-label">Communication board</div>
-            <h2 id="board-title">Daily flow</h2>
-          </div>
-          <div class="board-meta" id="board-meta"></div>
-        </div>
-        <div class="cards-grid" id="cards-grid"></div>
       </section>
 
       <section class="table-section">

@@ -262,8 +262,12 @@ h1 {
   margin-top: 4px;
 }
 
+.chart-select-field-inline {
+  margin-top: 2px;
+}
+
 .filters-card-board {
-  max-width: 560px;
+  max-width: 640px;
 }
 
 .filters-block {

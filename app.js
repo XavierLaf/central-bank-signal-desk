@@ -1,6 +1,5 @@
 (function () {
   const state = {
-    week: "THIS_WEEK",
     currency: "USD",
     search: "",
     timezone: "America/Toronto",
@@ -10,17 +9,13 @@
   const summaryGrid = document.getElementById("summary-grid");
   const nextRefresh = document.getElementById("next-refresh");
   const lastRun = document.getElementById("last-run");
-  const cardsGrid = document.getElementById("cards-grid");
   const tableBody = document.getElementById("table-body");
-  const boardTitle = document.getElementById("board-title");
-  const boardMeta = document.getElementById("board-meta");
   const chartMeta = document.getElementById("chart-meta");
   const chartWindowSelect = document.getElementById("chart-window-select");
   const policyMetaGrid = document.getElementById("policy-meta-grid");
   const toneChart = document.getElementById("tone-chart");
   const sourceList = document.getElementById("source-list");
   const searchInput = document.getElementById("search-input");
-  const weekSelect = document.getElementById("week-select");
   const timezoneOptions = [
     "America/Toronto",
     "America/New_York",
@@ -205,116 +200,6 @@
     }
 
     return parsed;
-  };
-
-  const startOfWeek = (date) => {
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const day = start.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    start.setDate(start.getDate() + diff);
-    return start;
-  };
-
-  const addDays = (date, amount) => {
-    const next = new Date(date);
-    next.setDate(next.getDate() + amount);
-    return next;
-  };
-
-  const endOfDay = (date) => {
-    const next = new Date(date);
-    next.setHours(23, 59, 59, 999);
-    return next;
-  };
-
-  const getWeekKey = (date) => {
-    const weekStart = startOfWeek(date);
-    return weekStart.toISOString().slice(0, 10);
-  };
-
-  const getReferenceWeekKey = () => getWeekKey(parseEntryDate(data?.targetDate) || new Date());
-
-  const formatWeekLabel = (weekStartValue, referenceWeekKey) => {
-    const weekStart = parseEntryDate(weekStartValue);
-    if (!weekStart) {
-      return weekStartValue;
-    }
-
-    const weekEnd = addDays(weekStart, 6);
-    const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
-    const startMonth = new Intl.DateTimeFormat("en-CA", { month: "short" }).format(weekStart);
-    const endMonth = new Intl.DateTimeFormat("en-CA", { month: "short" }).format(weekEnd);
-    const startDay = weekStart.getDate();
-    const endDay = weekEnd.getDate();
-    const year = weekEnd.getFullYear();
-    const rangeLabel = sameMonth
-      ? `${startMonth} ${startDay}-${endDay}, ${year}`
-      : `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
-
-    if (weekStartValue === referenceWeekKey) {
-      return `This week | ${rangeLabel}`;
-    }
-
-    return rangeLabel;
-  };
-
-  const buildWeekOptions = () => {
-    const referenceWeekKey = getReferenceWeekKey();
-    const weekKeys = [...new Set(data.entries.map((entry) => getWeekKey(parseEntryDate(entry.date) || new Date())))]
-      .sort((left, right) => right.localeCompare(left));
-
-    if (!weekKeys.includes(referenceWeekKey)) {
-      weekKeys.unshift(referenceWeekKey);
-    }
-
-    return [
-      ...weekKeys.map((weekKey) => ({
-        value: weekKey,
-        label: formatWeekLabel(weekKey, referenceWeekKey)
-      })),
-      { value: "ALL_TIME", label: "All history" }
-    ];
-  };
-
-  const createDateRange = () => {
-    if (state.week === "ALL_TIME") {
-      return {
-        start: null,
-        end: null,
-        label: "All history"
-      };
-    }
-
-    const weekStart = parseEntryDate(state.week) || startOfWeek(parseEntryDate(data?.targetDate) || new Date());
-
-    return {
-      start: weekStart,
-      end: endOfDay(addDays(weekStart, 6)),
-      label: formatWeekLabel(getWeekKey(weekStart), getReferenceWeekKey())
-    };
-  };
-
-  const getViewCopy = () => {
-    if (state.week === "ALL_TIME") {
-      return {
-        title: "Archive flow",
-        meta: "all history"
-      };
-    }
-
-    const weekLabel = createDateRange().label.replace("This week | ", "");
-    if (state.week === getReferenceWeekKey()) {
-      return {
-        title: "This week flow",
-        meta: "this week"
-      };
-    }
-
-    return {
-      title: `Week of ${weekLabel}`,
-      meta: `week of ${weekLabel}`
-    };
   };
 
   const mergeDataSets = (baseData, historyData) => {
@@ -560,14 +445,17 @@
 
   const filteredEntries = () => {
     const search = state.search.trim().toLowerCase();
-    const dateRange = createDateRange();
+    const selectedWindow = getSelectedChartWindow();
+    const startDate = parseEntryDate(selectedWindow?.previousDecisionDate);
+    const endDate = parseEntryDate(selectedWindow?.nextDecisionDate);
 
     return data.entries.filter((entry) => {
       const entryDate = parseEntryDate(entry.date);
-      const matchesWeek =
-        !dateRange.start ||
+      const matchesWindow =
+        !startDate ||
+        !endDate ||
         !entryDate ||
-        (entryDate >= dateRange.start && entryDate <= dateRange.end);
+        (entryDate >= startDate && entryDate <= endDate);
       const matchesCurrency = entry.currency === state.currency;
       const haystack = [
         entry.currency,
@@ -583,13 +471,15 @@
         .join(" ")
         .toLowerCase();
       const matchesSearch = !search || haystack.includes(search);
-      return matchesWeek && matchesCurrency && matchesSearch;
+      return matchesWindow && matchesCurrency && matchesSearch;
     });
   };
 
   const renderSummary = () => {
-    const entries = filteredEntries();
-    const rangeLabel = createDateRange().label;
+    const selectedWindow = getSelectedChartWindow();
+    const rangeLabel = selectedWindow
+      ? `${formatCalendarDate(selectedWindow.previousDecisionDate)} to ${formatCalendarDate(selectedWindow.nextDecisionDate)}`
+      : "No policy window selected";
     const todaysCurrencies = [...new Set(
       data.entries
         .filter((entry) => entry.date === data.targetDate)
@@ -597,9 +487,9 @@
     )].sort();
     const cards = [
       {
-        title: "View window",
+        title: "Policy window",
         value: rangeLabel,
-        subtext: `Anchored to ${data.targetDate} in ${data.timezone}`
+        subtext: selectedWindow ? selectedWindow.moveSummary : `Anchored to ${data.targetDate} in ${data.timezone}`
       },
       {
         title: "New today",
@@ -814,7 +704,7 @@
     `;
 
     toneChart.innerHTML = `
-      <div class="chart-caption">${state.currency} communication is traced from the selected rate decision through the next scheduled decision. This chart is independent from the week filter and shows the full policy window.</div>
+      <div class="chart-caption">${state.currency} communication is traced from the selected rate decision through the next scheduled decision, so the full policy window stays visible in one view.</div>
       <svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Tone over time chart">
         ${bandMarkup}
         ${yAxisLines}
@@ -826,53 +716,12 @@
     `;
   };
 
-  const renderBoard = () => {
-    const entries = filteredEntries();
-    const viewCopy = getViewCopy();
-    boardTitle.textContent = `${state.currency} ${viewCopy.title.toLowerCase()}`;
-    boardMeta.textContent = `${entries.length} item${entries.length === 1 ? "" : "s"} in ${viewCopy.meta} after filters`;
-    cardsGrid.innerHTML = "";
-
-    if (!entries.length) {
-      cardsGrid.innerHTML = "<div class='empty-state'>No communication matches the current filters.</div>";
-      return;
-    }
-
-    entries.forEach((entry) => {
-      const article = document.createElement("article");
-      article.className = "signal-card";
-      article.innerHTML = `
-        <div class="signal-header">
-          <div class="signal-title">
-            <div class="signal-currency">${entry.currency} / ${entry.member}</div>
-            <div class="signal-role">${entry.roleTitle} / ${entry.bank}</div>
-          </div>
-          <div class="tag-stack">
-            <span class="tag ${entry.tone.toLowerCase()}">${entry.tone}</span>
-            <span class="tag">${entry.status}</span>
-          </div>
-        </div>
-        <div class="signal-copy">
-          <p><strong>${entry.communicationType}</strong></p>
-          <p>${entry.quoteSummary}</p>
-          <p><strong>Interpretation:</strong> ${entry.interpretation}</p>
-          <p><strong>Expected impact:</strong> ${entry.expectedImpact}</p>
-        </div>
-        <div class="signal-foot">
-          <span>${entry.date}</span>
-          <a href="${entry.sourceUrl}" target="_blank" rel="noreferrer">${entry.sourceLabel}</a>
-        </div>
-      `;
-      cardsGrid.appendChild(article);
-    });
-  };
-
   const renderTable = () => {
     const entries = filteredEntries();
     tableBody.innerHTML = "";
 
     if (!entries.length) {
-      tableBody.innerHTML = "<tr><td colspan='10'>No rows match the current filters.</td></tr>";
+      tableBody.innerHTML = "<tr><td colspan='10'>No rows match the current currency, policy window, and search filter.</td></tr>";
       return;
     }
 
@@ -909,18 +758,11 @@
   const render = () => {
     renderSummary();
     renderChart();
-    renderBoard();
     renderTable();
   };
 
   const initializeFilters = () => {
     const currencyValues = [...new Set(data.entries.map((entry) => entry.currency))].sort();
-    const weekOptions = buildWeekOptions();
-
-    weekSelect.innerHTML = weekOptions
-      .map((option) => `<option value="${option.value}">${option.label}</option>`)
-      .join("");
-    weekSelect.value = state.week;
     renderFilterRow("currency-filters", currencyValues, "currency", { includeAll: false });
   };
 
@@ -929,7 +771,6 @@
 
     if (window.CENTRAL_BANK_MONITOR_DATA) {
       data = mergeDataSets(window.CENTRAL_BANK_MONITOR_DATA, historyData);
-      state.week = getReferenceWeekKey();
       state.currency = data.entries.some((entry) => entry.currency === "USD")
         ? "USD"
         : [...new Set(data.entries.map((entry) => entry.currency))].sort()[0];
@@ -954,7 +795,6 @@
     }
 
     data = mergeDataSets(data, historyData);
-    state.week = getReferenceWeekKey();
     state.currency = data.entries.some((entry) => entry.currency === "USD")
       ? "USD"
       : [...new Set(data.entries.map((entry) => entry.currency))].sort()[0];
@@ -973,14 +813,9 @@
     render();
   });
 
-  weekSelect.addEventListener("change", (event) => {
-    state.week = event.target.value;
-    render();
-  });
-
   chartWindowSelect.addEventListener("change", (event) => {
     state.chartWindowSelections[state.currency] = event.target.value;
-    renderChart();
+    render();
   });
 
   loadData();
