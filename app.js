@@ -341,8 +341,12 @@
 
   const renderSummary = () => {
     const entries = filteredEntries();
-    const currenciesWithSignal = new Set(entries.map((entry) => entry.currency)).size;
     const rangeLabel = createDateRange().label;
+    const todaysCurrencies = [...new Set(
+      data.entries
+        .filter((entry) => entry.date === data.targetDate)
+        .map((entry) => entry.currency)
+    )].sort();
     const cards = [
       {
         title: "View window",
@@ -350,9 +354,11 @@
         subtext: `Anchored to ${data.targetDate} in ${data.timezone}`
       },
       {
-        title: "Qualified communications",
-        value: String(entries.length),
-        subtext: `${currenciesWithSignal} currencies with signal`
+        title: "New today",
+        subtext: todaysCurrencies.length
+          ? `${todaysCurrencies.length} currencies with fresh communication on ${data.targetDate}`
+          : `No fresh communication captured on ${data.targetDate}`,
+        currencies: todaysCurrencies
       },
       {
         title: "Coverage sweep",
@@ -385,6 +391,18 @@
                 .join("")}
             </select>
           </label>
+        `;
+      } else if (card.currencies) {
+        article.innerHTML = `
+          <div class="summary-title">${card.title}</div>
+          <div class="summary-subtext">${card.subtext}</div>
+          <div class="summary-currency-list">
+            ${card.currencies.length
+              ? card.currencies
+                  .map((currency) => `<span class="summary-currency-chip">${currency}</span>`)
+                  .join("")
+              : "<span class=\"summary-currency-empty\">No new central bank communication today.</span>"}
+          </div>
         `;
       } else {
         article.innerHTML = `

@@ -61,6 +61,7 @@ body::before {
 .hero-copy,
 .hero-panel,
 .summary-card,
+.prompt-card,
 .filters-card,
 .board-section,
 .table-section,
@@ -179,6 +180,34 @@ h1 {
 
 .summary-subtext {
   margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.summary-currency-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.summary-currency-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.14);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  color: var(--accent-deep);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.summary-currency-empty {
   color: var(--muted);
   line-height: 1.5;
 }
