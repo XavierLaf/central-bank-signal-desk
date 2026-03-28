@@ -4,7 +4,8 @@
     currency: "ALL",
     tone: "ALL",
     status: "ALL",
-    search: ""
+    search: "",
+    timezone: "America/Toronto"
   };
 
   const summaryGrid = document.getElementById("summary-grid");
@@ -21,6 +22,17 @@
   const sourceList = document.getElementById("source-list");
   const searchInput = document.getElementById("search-input");
   const weekSelect = document.getElementById("week-select");
+  const timezoneOptions = [
+    "America/Toronto",
+    "America/New_York",
+    "UTC",
+    "Europe/London",
+    "Europe/Zurich",
+    "Europe/Frankfurt",
+    "Asia/Tokyo",
+    "Australia/Sydney",
+    "Pacific/Auckland"
+  ];
   const toneScoreMap = {
     Dovish: -1,
     Neutral: 0,
@@ -232,6 +244,21 @@
     document.body.innerHTML = `<main class="page-shell"><div class="empty-state">${message}</div></main>`;
   };
 
+  const resolveInitialTimezone = () => {
+    const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (browserTimezone) {
+      return browserTimezone;
+    }
+
+    return data?.timezone || "America/Toronto";
+  };
+
+  const formatTimezoneLabel = (timezone) =>
+    timezone
+      .replaceAll("_", " ")
+      .split("/")
+      .join(" / ");
+
   const formatDateTime = (value) => {
     if (!value) {
       return "Unknown";
@@ -245,8 +272,15 @@
     return new Intl.DateTimeFormat("en-CA", {
       dateStyle: "medium",
       timeStyle: "short",
-      timeZone: data?.timezone || "America/Toronto"
+      timeZone: state.timezone || data?.timezone || "America/Toronto"
     }).format(parsed);
+  };
+
+  const renderHeaderMeta = () => {
+    nextRefresh.textContent = data.schedule?.label || "Schedule unavailable";
+    lastRun.textContent = `Last generated ${formatDateTime(data.generatedAt)} | ${formatTimezoneLabel(
+      state.timezone
+    )} | ${data.runStatus || "No status available"}${data.importedHistoryCount ? ` | ${data.importedHistoryCount} Notion history rows merged` : ""}`;
   };
 
   const makeChip = (label, value, group, currentValue) => {
@@ -331,23 +365,50 @@
         subtext: data.coverageSummary.note
       },
       {
-        title: "Daily cadence",
-        value: data.schedule.label,
-        subtext: `Target run: ${data.schedule.timezone}`
+        title: "Display timezone",
+        value: formatTimezoneLabel(state.timezone),
+        subtext: "Choose how timestamps are shown across the dashboard.",
+        isTimezoneControl: true
       }
     ];
 
     summaryGrid.innerHTML = "";
     cards.forEach((card) => {
       const article = document.createElement("article");
-      article.className = "summary-card";
-      article.innerHTML = `
-        <div class="summary-title">${card.title}</div>
-        <div class="summary-value">${card.value}</div>
-        <div class="summary-subtext">${card.subtext}</div>
-      `;
+      article.className = `summary-card${card.isTimezoneControl ? " summary-card-control" : ""}`;
+      if (card.isTimezoneControl) {
+        article.innerHTML = `
+          <div class="summary-title">${card.title}</div>
+          <label class="summary-select-field">
+            <span class="summary-select-label">${card.subtext}</span>
+            <select class="summary-select" id="timezone-select">
+              ${timezoneOptions
+                .map(
+                  (timezone) =>
+                    `<option value="${timezone}"${timezone === state.timezone ? " selected" : ""}>${formatTimezoneLabel(timezone)}</option>`
+                )
+                .join("")}
+            </select>
+          </label>
+        `;
+      } else {
+        article.innerHTML = `
+          <div class="summary-title">${card.title}</div>
+          <div class="summary-value">${card.value}</div>
+          <div class="summary-subtext">${card.subtext}</div>
+        `;
+      }
       summaryGrid.appendChild(article);
     });
+
+    const timezoneSelect = document.getElementById("timezone-select");
+    if (timezoneSelect) {
+      timezoneSelect.addEventListener("change", (event) => {
+        state.timezone = event.target.value;
+        renderHeaderMeta();
+        renderSummary();
+      });
+    }
   };
 
   const renderChart = () => {
@@ -615,9 +676,9 @@
     if (window.CENTRAL_BANK_MONITOR_DATA) {
       data = mergeDataSets(window.CENTRAL_BANK_MONITOR_DATA, historyData);
       state.week = getReferenceWeekKey();
+      state.timezone = resolveInitialTimezone();
       promptText.textContent = data.prompt || "Prompt unavailable";
-      nextRefresh.textContent = data.schedule?.label || "Schedule unavailable";
-      lastRun.textContent = `Last generated ${formatDateTime(data.generatedAt)} | ${data.runStatus || "No status available"}${data.importedHistoryCount ? ` | ${data.importedHistoryCount} Notion history rows merged` : ""}`;
+      renderHeaderMeta();
       initializeFilters();
       renderSources();
       render();
@@ -637,10 +698,10 @@
 
     data = mergeDataSets(data, historyData);
     state.week = getReferenceWeekKey();
+    state.timezone = resolveInitialTimezone();
 
     promptText.textContent = data.prompt || "Prompt unavailable";
-    nextRefresh.textContent = data.schedule?.label || "Schedule unavailable";
-    lastRun.textContent = `Last generated ${formatDateTime(data.generatedAt)} | ${data.runStatus || "No status available"}${data.importedHistoryCount ? ` | ${data.importedHistoryCount} Notion history rows merged` : ""}`;
+    renderHeaderMeta();
 
     initializeFilters();
     renderSources();

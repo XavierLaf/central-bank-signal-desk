@@ -184,6 +184,31 @@ h1 {
   line-height: 1.5;
 }
 
+.summary-card-control {
+  align-content: start;
+}
+
+.summary-select-field {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.summary-select-label {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.summary-select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink);
+  font: inherit;
+}
+
 .control-panel {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
