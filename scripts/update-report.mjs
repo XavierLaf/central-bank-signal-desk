@@ -63,8 +63,21 @@ const VALID_TONES = new Set(["Hawkish", "Neutral", "Dovish"]);
 const VALID_STATUSES = new Set(["Scheduled", "Live", "Published"]);
 
 const timezone = process.env.OPENAI_TIMEZONE || "America/Toronto";
-const model = process.env.OPENAI_MODEL || "gpt-5.2-chat-latest";
-const reasoningEffort = process.env.OPENAI_REASONING_EFFORT || "high";
+const model = process.env.OPENAI_MODEL || "gpt-5.4";
+const requestedReasoningEffort = process.env.OPENAI_REASONING_EFFORT || "high";
+
+function resolveReasoningEffort(modelName, effort) {
+  const normalizedModel = (modelName || "").toLowerCase();
+  const normalizedEffort = (effort || "").toLowerCase();
+
+  if (normalizedModel.includes("chat-latest") && (normalizedEffort === "high" || normalizedEffort === "xhigh")) {
+    return "medium";
+  }
+
+  return effort;
+}
+
+const reasoningEffort = resolveReasoningEffort(model, requestedReasoningEffort);
 
 function getTargetDate(timeZone) {
   const formatter = new Intl.DateTimeFormat("en-CA", {

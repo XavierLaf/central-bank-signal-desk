@@ -30,7 +30,7 @@ jobs:
         run: node scripts/update-report.mjs
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5.2-chat-latest' }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5.4' }}
           OPENAI_REASONING_EFFORT: ${{ vars.OPENAI_REASONING_EFFORT || 'high' }}
           OPENAI_TIMEZONE: ${{ vars.OPENAI_TIMEZONE || 'America/Toronto' }}
           OPENAI_COUNTRY: ${{ vars.OPENAI_COUNTRY || 'CA' }}
