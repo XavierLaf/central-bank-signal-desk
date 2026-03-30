@@ -61,6 +61,8 @@ const BANK_TARGETS = [
 ];
 const VALID_TONES = new Set(["Hawkish", "Neutral", "Dovish"]);
 const VALID_STATUSES = new Set(["Scheduled", "Live", "Published"]);
+const MAX_CONCURRENT_REQUESTS = 3;
+const REQUEST_TIMEOUT_MS = Number(process.env.OPENAI_REQUEST_TIMEOUT_MS || 180000);
 
 const timezone = process.env.OPENAI_TIMEZONE || "America/Toronto";
 const model = process.env.OPENAI_MODEL || "gpt-5.4";
@@ -305,49 +307,63 @@ async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesFor
     "Return only the structured JSON object with entries and sources."
   ].join("\n");
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model,
-      reasoning: { effort: reasoningEffort },
-      tools: [
-        {
-          type: "web_search",
-          user_location: {
-            type: "approximate",
-            country: process.env.OPENAI_COUNTRY || "CA",
-            city: process.env.OPENAI_CITY || "Toronto",
-            region: process.env.OPENAI_REGION || "Ontario",
-            timezone
-          }
-        }
-      ],
-      tool_choice: "auto",
-      include: ["web_search_call.action.sources"],
-      text: {
-        format: {
-          type: "json_schema",
-          name: `central_bank_signal_day_${target.currency.toLowerCase()}`,
-          strict: true,
-          schema: buildSchema([target.currency])
-        }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let response;
+  try {
+    response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
       },
-      input: [
-        {
-          role: "system",
-          content: [{ type: "input_text", text: systemPrompt }]
+      body: JSON.stringify({
+        model,
+        reasoning: { effort: reasoningEffort },
+        tools: [
+          {
+            type: "web_search",
+            user_location: {
+              type: "approximate",
+              country: process.env.OPENAI_COUNTRY || "CA",
+              city: process.env.OPENAI_CITY || "Toronto",
+              region: process.env.OPENAI_REGION || "Ontario",
+              timezone
+            }
+          }
+        ],
+        tool_choice: "auto",
+        include: ["web_search_call.action.sources"],
+        text: {
+          format: {
+            type: "json_schema",
+            name: `central_bank_signal_day_${target.currency.toLowerCase()}`,
+            strict: true,
+            schema: buildSchema([target.currency])
+          }
         },
-        {
-          role: "user",
-          content: [{ type: "input_text", text: userPrompt }]
-        }
-      ]
-    })
-  });
+        input: [
+          {
+            role: "system",
+            content: [{ type: "input_text", text: systemPrompt }]
+          },
+          {
+            role: "user",
+            content: [{ type: "input_text", text: userPrompt }]
+          }
+        ]
+      })
+    });
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(`OpenAI request timed out for ${target.focus} after ${REQUEST_TIMEOUT_MS}ms.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const responseBody = await response.json();
 
@@ -357,6 +373,23 @@ async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesFor
 
   const outputText = extractOutputText(responseBody);
   return JSON.parse(outputText);
+}
+
+async function mapWithConcurrency(items, limit, mapper) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
 }
 
 async function main() {
@@ -380,14 +413,12 @@ async function main() {
   });
 
   const targetDate = getTargetDate(timezone);
-  const snapshots = [];
-  for (const target of BANK_TARGETS) {
+  const snapshots = await mapWithConcurrency(BANK_TARGETS, MAX_CONCURRENT_REQUESTS, async (target) => {
     const existingEntriesForTarget = (existingReport.entries || [])
       .filter((entry) => entry.date === targetDate)
       .filter((entry) => entry.currency === target.currency);
-    const snapshot = await fetchDailySnapshot(prompt, targetDate, target, existingEntriesForTarget);
-    snapshots.push(snapshot);
-  }
+    return fetchDailySnapshot(prompt, targetDate, target, existingEntriesForTarget);
+  });
 
   const normalizedNewEntries = snapshots
     .flatMap((snapshot) => snapshot.entries || [])
