@@ -1,8 +1,8 @@
 window.CENTRAL_BANK_MONITOR_DATA = {
   "targetDate": "2026-03-30",
   "timezone": "America/Toronto",
-  "generatedAt": "2026-03-30T22:23:41.578Z",
-  "runStatus": "Automated refresh completed via OpenAI Responses API using gpt-5.4",
+  "generatedAt": "2026-03-30T23:24:52.369Z",
+  "runStatus": "Automated refresh completed via OpenAI Responses API using gpt-5.4 with warnings: Daily refresh skipped after retry failure: OpenAI request timed out after 90000ms.",
   "schedule": {
     "label": "Daily at 6:30 PM ET",
     "timezone": "America/Toronto"
@@ -36,73 +36,13 @@ window.CENTRAL_BANK_MONITOR_DATA = {
       "expectedImpact": "USD bearish, weak to moderate, intraday to short-term.",
       "sourceLabel": "Reuters-cited market coverage",
       "sourceUrl": "https://m.economictimes.com/markets/us-stocks/news/us-stock-market-feds-miran-lays-out-roadmap-for-smaller-balance-sheet-easier-policy/articleshow/129838223.cms"
-    },
-    {
-      "date": "2026-03-30",
-      "currency": "JPY",
-      "bank": "Bank of Japan",
-      "member": "Policy Board",
-      "roleTitle": "Policy Board members",
-      "communicationType": "Summary of Opinions",
-      "status": "Published",
-      "tone": "Hawkish",
-      "quoteSummary": "The Summary of Opinions showed multiple board members arguing that if the outlook is realized the Bank should continue raising the policy rate, may need to hike without hesitation if underlying inflation does not weaken materially, and could even consider faster hikes if oil- and yen-driven second-round effects intensify.",
-      "interpretation": "Hawkish because the published discussion leaned clearly toward further normalization, emphasized the risk of falling behind the curve, and showed openness to quicker tightening if inflation persistence rises.",
-      "expectedImpact": "JPY bullish, moderate, intraday to short-term.",
-      "sourceLabel": "Bank of Japan",
-      "sourceUrl": "https://www.boj.or.jp/en/mopo/mpmsche_minu/opinion_2026/opi260319.pdf"
-    },
-    {
-      "date": "2026-03-30",
-      "currency": "USD",
-      "bank": "Federal Reserve",
-      "member": "Jerome H. Powell",
-      "roleTitle": "Chair, Federal Reserve Board",
-      "communicationType": "Q&A / class discussion",
-      "status": "Live",
-      "tone": "Dovish",
-      "quoteSummary": "Powell said the Fed is in a good place to wait and see how the Iran war affects growth and inflation, that policymakers typically look through oil-price shocks, and that longer-term inflation expectations still appear anchored even as energy prices rise.",
-      "interpretation": "Dovish because he explicitly argued against an immediate policy response to the energy shock, stressed patience, and signaled that higher oil prices alone do not currently justify tighter policy while inflation expectations remain anchored.",
-      "expectedImpact": "USD bearish, moderate, intraday to short-term.",
-      "sourceLabel": "Reuters via Investing.com",
-      "sourceUrl": "https://za.investing.com/news/economy-news/powell-says-fed-can-wait-and-see-how-war-affects-inflation-4189199"
-    },
-    {
-      "date": "2026-03-30",
-      "currency": "USD",
-      "bank": "Federal Reserve Bank of New York",
-      "member": "John C. Williams",
-      "roleTitle": "President, Federal Reserve Bank of New York",
-      "communicationType": "Remarks / moderated Q&A",
-      "status": "Live",
-      "tone": "Neutral",
-      "quoteSummary": "Williams said inflation is around 3%, with tariffs adding roughly 0.5 to 0.75 percentage points, but he still expects inflation to slow to about 2.75% this year and return to 2% in 2027, with no significant second-round tariff effects and policy appropriately positioned.",
-      "interpretation": "Neutral because he acknowledged near-term inflation pressure from tariffs and energy, but balanced that against an unchanged disinflation outlook, limited spillovers, and a policy stance he described as appropriately calibrated.",
-      "expectedImpact": "USD neutral to mildly bearish, weak, intraday to short-term.",
-      "sourceLabel": "Reuters via Investing.com",
-      "sourceUrl": "https://za.investing.com/news/economy-news/new-york-feds-williams-sees-inflation-hitting-target-by-2027-4189270"
     }
   ],
   "sources": [
     {
-      "label": "Bank of Japan",
-      "url": "https://www.boj.or.jp/en/mopo/mpmsche_minu/opinion_2026/opi260319.pdf",
-      "note": "Official Summary of Opinions for the March 18-19, 2026 meeting, published on March 30, 2026."
-    },
-    {
       "label": "Economic Times article carrying Reuters-cited Miran remarks",
       "url": "https://m.economictimes.com/markets/us-stocks/news/us-stock-market-feds-miran-lays-out-roadmap-for-smaller-balance-sheet-easier-policy/articleshow/129838223.cms",
       "note": "Used because no same-day official Fed transcript was available at snapshot time."
-    },
-    {
-      "label": "Reuters via Investing.com",
-      "url": "https://za.investing.com/news/economy-news/new-york-feds-williams-sees-inflation-hitting-target-by-2027-4189270",
-      "note": "Same-day Reuters write-up of Williams's Staten Island remarks and moderated Q&A."
-    },
-    {
-      "label": "Reuters via Investing.com",
-      "url": "https://za.investing.com/news/economy-news/powell-says-fed-can-wait-and-see-how-war-affects-inflation-4189199",
-      "note": "Same-day Reuters write-up of Powell's Harvard class discussion and Q&A."
     }
   ]
 };
