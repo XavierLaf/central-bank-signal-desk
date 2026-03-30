@@ -9,11 +9,61 @@ const reportJsPath = path.join(rootDir, "data", "report.js");
 const promptPath = path.join(rootDir, "config", "monitor-prompt.md");
 
 const COVERED_CURRENCIES = ["USD", "EUR", "JPY", "NZD", "AUD", "CHF", "CAD", "GBP"];
+const BANK_TARGETS = [
+  {
+    currency: "USD",
+    focus: "USD / Federal Reserve",
+    researchScope:
+      "Focus on the Federal Reserve Board, all regional Fed banks, and Fed policymakers including Powell, Jefferson, Kugler, Cook, Waller, Bowman, Barr, Williams, Daly, Bostic, Barkin, Goolsbee, Logan, Musalem, Schmid, Hammack, Kashkari, Collins, and Harker."
+  },
+  {
+    currency: "EUR",
+    focus: "EUR / ECB",
+    researchScope:
+      "Focus on the ECB, the Eurosystem, and ECB Governing Council members including Lagarde, Lane, Schnabel, Cipollone, de Guindos, Nagel, Villeroy, Stournaras, Holzmann, Knot, and Kazaks."
+  },
+  {
+    currency: "JPY",
+    focus: "JPY / Bank of Japan",
+    researchScope:
+      "Focus on the Bank of Japan, Governor Ueda, Deputy Governors, Policy Board members, meeting summaries, Reuters-reported remarks, and official BOJ publications released today in Japan."
+  },
+  {
+    currency: "NZD",
+    focus: "NZD / Reserve Bank of New Zealand",
+    researchScope:
+      "Focus on the Reserve Bank of New Zealand, Governor, Deputy Governor, Chief Economist, assistant governors, speeches, interviews, and official releases or Reuters-reported remarks."
+  },
+  {
+    currency: "AUD",
+    focus: "AUD / Reserve Bank of Australia",
+    researchScope:
+      "Focus on the Reserve Bank of Australia, Governor, Deputy Governor, Assistant Governors including Kent, speeches, interviews, parliamentary testimony, and Reuters-reported remarks."
+  },
+  {
+    currency: "CHF",
+    focus: "CHF / Swiss National Bank",
+    researchScope:
+      "Focus on the Swiss National Bank, Chair, Vice Chairs, Governing Board, speeches, interviews, official releases, and Reuters-reported remarks."
+  },
+  {
+    currency: "CAD",
+    focus: "CAD / Bank of Canada",
+    researchScope:
+      "Focus on the Bank of Canada, Governor Macklem, Senior Deputy Governor Rogers, Deputy Governors, speeches, interviews, official publications, and Reuters-reported remarks."
+  },
+  {
+    currency: "GBP",
+    focus: "GBP / Bank of England",
+    researchScope:
+      "Focus on the Bank of England, Governor Bailey, MPC members including Pill, Greene, Ramsden, Breeden, Lombardelli, Taylor, Mann, Dhingra, speeches, interviews, testimonies, and Reuters-reported remarks."
+  }
+];
 const VALID_TONES = new Set(["Hawkish", "Neutral", "Dovish"]);
 const VALID_STATUSES = new Set(["Scheduled", "Live", "Published"]);
 
 const timezone = process.env.OPENAI_TIMEZONE || "America/Toronto";
-const model = process.env.OPENAI_MODEL || "gpt-5.4";
+const model = process.env.OPENAI_MODEL || "gpt-5.2-chat-latest";
 const reasoningEffort = process.env.OPENAI_REASONING_EFFORT || "high";
 
 function getTargetDate(timeZone) {
@@ -150,7 +200,7 @@ function extractOutputText(responseBody) {
   throw new Error("OpenAI response did not include parseable output text.");
 }
 
-function buildSchema() {
+function buildSchema(currencyEnum = COVERED_CURRENCIES) {
   return {
     type: "object",
     additionalProperties: false,
@@ -178,7 +228,7 @@ function buildSchema() {
           ],
           properties: {
             date: { type: "string" },
-            currency: { type: "string", enum: COVERED_CURRENCIES },
+            currency: { type: "string", enum: currencyEnum },
             bank: { type: "string" },
             member: { type: "string" },
             roleTitle: { type: "string" },
@@ -210,24 +260,28 @@ function buildSchema() {
   };
 }
 
-async function fetchDailySnapshot(prompt, targetDate, existingEntriesForToday) {
+async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesForToday) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not set.");
   }
 
   const systemPrompt = [
     "You are a senior macro and FX central bank communication analyst.",
-    "Your job is to build a trader-grade, same-day communication map that is as complete as possible.",
+    "Your job is to build a trader-grade, same-day communication map that is as complete as possible for a single currency and central bank target.",
     "Use live newswire flow first, official central bank sources second, and event schedules third.",
     "Return only JSON matching the provided schema.",
     "Do not invent communications or quotes.",
     "If a communication is only scheduled or there is not enough wording to defend a Hawkish, Neutral, or Dovish read, omit it from the output.",
     "Merge duplicate coverage into one best entry and keep the most complete source wording available.",
-    "Prefer direct official URLs or original article URLs for sourceUrl."
+    "Prefer direct official URLs or original article URLs for sourceUrl.",
+    `Focus only on ${target.focus}.`,
+    target.researchScope,
+    "Err on the side of completeness for same-day market-relevant remarks."
   ].join(" ");
 
   const userPrompt = [
     `Today means ${targetDate} in ${timezone}.`,
+    `Research target: ${target.focus}.`,
     "",
     "Use this research prompt verbatim as the operating policy:",
     prompt,
@@ -264,9 +318,9 @@ async function fetchDailySnapshot(prompt, targetDate, existingEntriesForToday) {
       text: {
         format: {
           type: "json_schema",
-          name: "central_bank_signal_day",
+          name: `central_bank_signal_day_${target.currency.toLowerCase()}`,
           strict: true,
-          schema: buildSchema()
+          schema: buildSchema([target.currency])
         }
       },
       input: [
@@ -313,10 +367,17 @@ async function main() {
   });
 
   const targetDate = getTargetDate(timezone);
-  const existingEntriesForToday = (existingReport.entries || []).filter((entry) => entry.date === targetDate);
-  const snapshot = await fetchDailySnapshot(prompt, targetDate, existingEntriesForToday);
+  const snapshots = [];
+  for (const target of BANK_TARGETS) {
+    const existingEntriesForTarget = (existingReport.entries || [])
+      .filter((entry) => entry.date === targetDate)
+      .filter((entry) => entry.currency === target.currency);
+    const snapshot = await fetchDailySnapshot(prompt, targetDate, target, existingEntriesForTarget);
+    snapshots.push(snapshot);
+  }
 
-  const normalizedNewEntries = (snapshot.entries || [])
+  const normalizedNewEntries = snapshots
+    .flatMap((snapshot) => snapshot.entries || [])
     .map((entry) => normalizeEntry(entry, targetDate))
     .filter((entry) => entry.date === targetDate)
     .filter((entry) => COVERED_CURRENCIES.includes(entry.currency))
@@ -326,7 +387,10 @@ async function main() {
   const historicalEntries = (existingReport.entries || []).filter((entry) => entry.date !== targetDate);
   const entries = dedupeEntries([...historicalEntries, ...normalizedNewEntries]);
   const referencedSourceUrls = new Set(entries.map((entry) => entry.sourceUrl));
-  const sources = dedupeSources([...(existingReport.sources || []), ...(snapshot.sources || [])])
+  const sources = dedupeSources([
+    ...(existingReport.sources || []),
+    ...snapshots.flatMap((snapshot) => snapshot.sources || [])
+  ])
     .filter((source) => referencedSourceUrls.has(source.url));
 
   const report = {
