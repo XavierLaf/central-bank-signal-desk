@@ -63,6 +63,7 @@ const VALID_TONES = new Set(["Hawkish", "Neutral", "Dovish"]);
 const VALID_STATUSES = new Set(["Scheduled", "Live", "Published"]);
 const MAX_CONCURRENT_REQUESTS = 3;
 const REQUEST_TIMEOUT_MS = Number(process.env.OPENAI_REQUEST_TIMEOUT_MS || 180000);
+const RETRY_TIMEOUT_MS = Number(process.env.OPENAI_RETRY_TIMEOUT_MS || 90000);
 
 const timezone = process.env.OPENAI_TIMEZONE || "America/Toronto";
 const model = process.env.OPENAI_MODEL || "gpt-5.4";
@@ -275,7 +276,7 @@ function buildSchema(currencyEnum = COVERED_CURRENCIES) {
   };
 }
 
-async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesForToday) {
+async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesForToday, effort = reasoningEffort, timeoutMs = REQUEST_TIMEOUT_MS) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not set.");
   }
@@ -308,7 +309,7 @@ async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesFor
   ].join("\n");
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   let response;
   try {
@@ -321,7 +322,7 @@ async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesFor
       },
       body: JSON.stringify({
         model,
-        reasoning: { effort: reasoningEffort },
+        reasoning: { effort },
         tools: [
           {
             type: "web_search",
@@ -358,7 +359,7 @@ async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesFor
     });
   } catch (error) {
     if (error.name === "AbortError") {
-      throw new Error(`OpenAI request timed out for ${target.focus} after ${REQUEST_TIMEOUT_MS}ms.`);
+      throw new Error(`OpenAI request timed out for ${target.focus} after ${timeoutMs}ms.`);
     }
     throw error;
   } finally {
@@ -373,6 +374,36 @@ async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesFor
 
   const outputText = extractOutputText(responseBody);
   return JSON.parse(outputText);
+}
+
+async function fetchTargetSnapshot(prompt, targetDate, target, existingEntriesForToday) {
+  try {
+    return await fetchDailySnapshot(prompt, targetDate, target, existingEntriesForToday, reasoningEffort, REQUEST_TIMEOUT_MS);
+  } catch (error) {
+    const isTimeout = String(error?.message || "").includes("timed out");
+    const shouldRetryWithMedium = isTimeout && reasoningEffort !== "medium";
+
+    if (shouldRetryWithMedium) {
+      try {
+        console.warn(`Retrying ${target.focus} with medium reasoning after timeout.`);
+        return await fetchDailySnapshot(prompt, targetDate, target, existingEntriesForToday, "medium", RETRY_TIMEOUT_MS);
+      } catch (retryError) {
+        console.warn(`Skipping ${target.focus}: ${retryError.message}`);
+        return {
+          entries: [],
+          sources: [],
+          warning: `${target.focus} skipped after retry failure: ${retryError.message}`
+        };
+      }
+    }
+
+    console.warn(`Skipping ${target.focus}: ${error.message}`);
+    return {
+      entries: [],
+      sources: [],
+      warning: `${target.focus} skipped: ${error.message}`
+    };
+  }
 }
 
 async function mapWithConcurrency(items, limit, mapper) {
@@ -417,7 +448,7 @@ async function main() {
     const existingEntriesForTarget = (existingReport.entries || [])
       .filter((entry) => entry.date === targetDate)
       .filter((entry) => entry.currency === target.currency);
-    return fetchDailySnapshot(prompt, targetDate, target, existingEntriesForTarget);
+    return fetchTargetSnapshot(prompt, targetDate, target, existingEntriesForTarget);
   });
 
   const normalizedNewEntries = snapshots
@@ -436,12 +467,17 @@ async function main() {
     ...snapshots.flatMap((snapshot) => snapshot.sources || [])
   ])
     .filter((source) => referencedSourceUrls.has(source.url));
+  const warnings = snapshots
+    .map((snapshot) => snapshot.warning)
+    .filter(Boolean);
 
   const report = {
     targetDate,
     timezone,
     generatedAt: new Date().toISOString(),
-    runStatus: `Automated refresh completed via OpenAI Responses API using ${model}`,
+    runStatus: warnings.length
+      ? `Automated refresh completed via OpenAI Responses API using ${model} with warnings: ${warnings.join(" | ")}`
+      : `Automated refresh completed via OpenAI Responses API using ${model}`,
     schedule: {
       label: "Daily at 6:30 PM ET",
       timezone
