@@ -1,7 +1,7 @@
 {
   "targetDate": "2026-03-30",
   "timezone": "America/Toronto",
-  "generatedAt": "2026-03-30T22:14:19.297Z",
+  "generatedAt": "2026-03-30T22:23:41.578Z",
   "runStatus": "Automated refresh completed via OpenAI Responses API using gpt-5.4",
   "schedule": {
     "label": "Daily at 6:30 PM ET",
@@ -46,8 +46,8 @@
       "communicationType": "Summary of Opinions",
       "status": "Published",
       "tone": "Hawkish",
-      "quoteSummary": "The BOJ’s summary of opinions showed multiple board members arguing that if the outlook is realized the Bank should continue raising the policy rate, may need to hike without hesitation if underlying inflation does not materially weaken, and should even consider accelerating hikes if oil- and yen-driven second-round effects intensify.",
-      "interpretation": "Hawkish because the published discussion leaned clearly toward further normalization, highlighted the risk of falling behind the curve, and showed openness to faster tightening if inflation persistence increases.",
+      "quoteSummary": "The Summary of Opinions showed multiple board members arguing that if the outlook is realized the Bank should continue raising the policy rate, may need to hike without hesitation if underlying inflation does not weaken materially, and could even consider faster hikes if oil- and yen-driven second-round effects intensify.",
+      "interpretation": "Hawkish because the published discussion leaned clearly toward further normalization, emphasized the risk of falling behind the curve, and showed openness to quicker tightening if inflation persistence rises.",
       "expectedImpact": "JPY bullish, moderate, intraday to short-term.",
       "sourceLabel": "Bank of Japan",
       "sourceUrl": "https://www.boj.or.jp/en/mopo/mpmsche_minu/opinion_2026/opi260319.pdf"
@@ -61,11 +61,11 @@
       "communicationType": "Q&A / class discussion",
       "status": "Live",
       "tone": "Dovish",
-      "quoteSummary": "Powell said the Fed is in a good place to wait and see how the Iran war affects growth and inflation, noting policymakers typically look through oil-price shocks and that longer-term inflation expectations appear well anchored beyond the short term.",
-      "interpretation": "Dovish because he explicitly pushed back on an immediate policy response to the energy shock, emphasized patience, and signaled that higher oil prices alone do not yet justify tighter policy while expectations remain anchored.",
+      "quoteSummary": "Powell said the Fed is in a good place to wait and see how the Iran war affects growth and inflation, that policymakers typically look through oil-price shocks, and that longer-term inflation expectations still appear anchored even as energy prices rise.",
+      "interpretation": "Dovish because he explicitly argued against an immediate policy response to the energy shock, stressed patience, and signaled that higher oil prices alone do not currently justify tighter policy while inflation expectations remain anchored.",
       "expectedImpact": "USD bearish, moderate, intraday to short-term.",
-      "sourceLabel": "Reuters via Business Recorder",
-      "sourceUrl": "https://www.brecorder.com/news/40413873/powell-says-fed-can-wait-and-see-how-war-affects-inflation"
+      "sourceLabel": "Reuters via Investing.com",
+      "sourceUrl": "https://za.investing.com/news/economy-news/powell-says-fed-can-wait-and-see-how-war-affects-inflation-4189199"
     },
     {
       "date": "2026-03-30",
@@ -76,7 +76,7 @@
       "communicationType": "Remarks / moderated Q&A",
       "status": "Live",
       "tone": "Neutral",
-      "quoteSummary": "Williams said inflation is around 3%, with tariffs adding roughly 0.5 to 0.75 percentage points, but he still expects inflation to slow to about 2.75% this year and return to 2% in 2027, with no significant second-round tariff effects and policy well positioned for both mandates.",
+      "quoteSummary": "Williams said inflation is around 3%, with tariffs adding roughly 0.5 to 0.75 percentage points, but he still expects inflation to slow to about 2.75% this year and return to 2% in 2027, with no significant second-round tariff effects and policy appropriately positioned.",
       "interpretation": "Neutral because he acknowledged near-term inflation pressure from tariffs and energy, but balanced that against an unchanged disinflation outlook, limited spillovers, and a policy stance he described as appropriately calibrated.",
       "expectedImpact": "USD neutral to mildly bearish, weak, intraday to short-term.",
       "sourceLabel": "Reuters via Investing.com",
@@ -85,9 +85,9 @@
   ],
   "sources": [
     {
-      "label": "Bank of Japan Summary of Opinions",
+      "label": "Bank of Japan",
       "url": "https://www.boj.or.jp/en/mopo/mpmsche_minu/opinion_2026/opi260319.pdf",
-      "note": "Official BOJ publication released on March 30, 2026 JST summarizing views from the March 18-19 policy meeting."
+      "note": "Official Summary of Opinions for the March 18-19, 2026 meeting, published on March 30, 2026."
     },
     {
       "label": "Economic Times article carrying Reuters-cited Miran remarks",
@@ -95,14 +95,14 @@
       "note": "Used because no same-day official Fed transcript was available at snapshot time."
     },
     {
-      "label": "Reuters via Business Recorder",
-      "url": "https://www.brecorder.com/news/40413873/powell-says-fed-can-wait-and-see-how-war-affects-inflation",
-      "note": "Same-day Reuters wire on Powell's Harvard Q&A in Cambridge, Massachusetts."
+      "label": "Reuters via Investing.com",
+      "url": "https://za.investing.com/news/economy-news/new-york-feds-williams-sees-inflation-hitting-target-by-2027-4189270",
+      "note": "Same-day Reuters write-up of Williams's Staten Island remarks and moderated Q&A."
     },
     {
       "label": "Reuters via Investing.com",
-      "url": "https://za.investing.com/news/economy-news/new-york-feds-williams-sees-inflation-hitting-target-by-2027-4189270",
-      "note": "Same-day Reuters-sourced summary of Williams's Staten Island remarks and moderated discussion."
+      "url": "https://za.investing.com/news/economy-news/powell-says-fed-can-wait-and-see-how-war-affects-inflation-4189199",
+      "note": "Same-day Reuters write-up of Powell's Harvard class discussion and Q&A."
     }
   ]
 }
