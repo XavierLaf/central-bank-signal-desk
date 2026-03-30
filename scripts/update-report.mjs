@@ -9,59 +9,8 @@ const reportJsPath = path.join(rootDir, "data", "report.js");
 const promptPath = path.join(rootDir, "config", "monitor-prompt.md");
 
 const COVERED_CURRENCIES = ["USD", "EUR", "JPY", "NZD", "AUD", "CHF", "CAD", "GBP"];
-const BANK_TARGETS = [
-  {
-    currency: "USD",
-    focus: "USD / Federal Reserve",
-    researchScope:
-      "Focus on the Federal Reserve Board, all regional Fed banks, and Fed policymakers including Powell, Jefferson, Kugler, Cook, Waller, Bowman, Barr, Williams, Daly, Bostic, Barkin, Goolsbee, Logan, Musalem, Schmid, Hammack, Kashkari, Collins, and Harker."
-  },
-  {
-    currency: "EUR",
-    focus: "EUR / ECB",
-    researchScope:
-      "Focus on the ECB, the Eurosystem, and ECB Governing Council members including Lagarde, Lane, Schnabel, Cipollone, de Guindos, Nagel, Villeroy, Stournaras, Holzmann, Knot, and Kazaks."
-  },
-  {
-    currency: "JPY",
-    focus: "JPY / Bank of Japan",
-    researchScope:
-      "Focus on the Bank of Japan, Governor Ueda, Deputy Governors, Policy Board members, meeting summaries, Reuters-reported remarks, and official BOJ publications released today in Japan."
-  },
-  {
-    currency: "NZD",
-    focus: "NZD / Reserve Bank of New Zealand",
-    researchScope:
-      "Focus on the Reserve Bank of New Zealand, Governor, Deputy Governor, Chief Economist, assistant governors, speeches, interviews, and official releases or Reuters-reported remarks."
-  },
-  {
-    currency: "AUD",
-    focus: "AUD / Reserve Bank of Australia",
-    researchScope:
-      "Focus on the Reserve Bank of Australia, Governor, Deputy Governor, Assistant Governors including Kent, speeches, interviews, parliamentary testimony, and Reuters-reported remarks."
-  },
-  {
-    currency: "CHF",
-    focus: "CHF / Swiss National Bank",
-    researchScope:
-      "Focus on the Swiss National Bank, Chair, Vice Chairs, Governing Board, speeches, interviews, official releases, and Reuters-reported remarks."
-  },
-  {
-    currency: "CAD",
-    focus: "CAD / Bank of Canada",
-    researchScope:
-      "Focus on the Bank of Canada, Governor Macklem, Senior Deputy Governor Rogers, Deputy Governors, speeches, interviews, official publications, and Reuters-reported remarks."
-  },
-  {
-    currency: "GBP",
-    focus: "GBP / Bank of England",
-    researchScope:
-      "Focus on the Bank of England, Governor Bailey, MPC members including Pill, Greene, Ramsden, Breeden, Lombardelli, Taylor, Mann, Dhingra, speeches, interviews, testimonies, and Reuters-reported remarks."
-  }
-];
 const VALID_TONES = new Set(["Hawkish", "Neutral", "Dovish"]);
 const VALID_STATUSES = new Set(["Scheduled", "Live", "Published"]);
-const MAX_CONCURRENT_REQUESTS = 3;
 const REQUEST_TIMEOUT_MS = Number(process.env.OPENAI_REQUEST_TIMEOUT_MS || 180000);
 const RETRY_TIMEOUT_MS = Number(process.env.OPENAI_RETRY_TIMEOUT_MS || 90000);
 
@@ -81,6 +30,16 @@ function resolveReasoningEffort(modelName, effort) {
 }
 
 const reasoningEffort = resolveReasoningEffort(model, requestedReasoningEffort);
+const GLOBAL_RESEARCH_SCOPE = [
+  "Cover USD / Federal Reserve including the Board and all regional Fed banks.",
+  "Cover EUR / ECB including the Governing Council and Eurosystem speakers.",
+  "Cover JPY / Bank of Japan including Reuters-reported remarks and official BOJ publications.",
+  "Cover NZD / Reserve Bank of New Zealand.",
+  "Cover AUD / Reserve Bank of Australia including Assistant Governors.",
+  "Cover CHF / Swiss National Bank.",
+  "Cover CAD / Bank of Canada.",
+  "Cover GBP / Bank of England including MPC members."
+].join(" ");
 
 function getTargetDate(timeZone) {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -276,28 +235,27 @@ function buildSchema(currencyEnum = COVERED_CURRENCIES) {
   };
 }
 
-async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesForToday, effort = reasoningEffort, timeoutMs = REQUEST_TIMEOUT_MS) {
+async function fetchDailySnapshot(prompt, targetDate, existingEntriesForToday, effort = reasoningEffort, timeoutMs = REQUEST_TIMEOUT_MS) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not set.");
   }
 
   const systemPrompt = [
     "You are a senior macro and FX central bank communication analyst.",
-    "Your job is to build a trader-grade, same-day communication map that is as complete as possible for a single currency and central bank target.",
+    "Your job is to build a trader-grade, same-day communication map that is as complete as possible across all covered central banks.",
     "Use live newswire flow first, official central bank sources second, and event schedules third.",
     "Return only JSON matching the provided schema.",
     "Do not invent communications or quotes.",
     "If a communication is only scheduled or there is not enough wording to defend a Hawkish, Neutral, or Dovish read, omit it from the output.",
     "Merge duplicate coverage into one best entry and keep the most complete source wording available.",
     "Prefer direct official URLs or original article URLs for sourceUrl.",
-    `Focus only on ${target.focus}.`,
-    target.researchScope,
+    GLOBAL_RESEARCH_SCOPE,
     "Err on the side of completeness for same-day market-relevant remarks."
   ].join(" ");
 
   const userPrompt = [
     `Today means ${targetDate} in ${timezone}.`,
-    `Research target: ${target.focus}.`,
+    `Research all covered central banks for ${targetDate}.`,
     "",
     "Use this research prompt verbatim as the operating policy:",
     prompt,
@@ -340,9 +298,9 @@ async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesFor
         text: {
           format: {
             type: "json_schema",
-            name: `central_bank_signal_day_${target.currency.toLowerCase()}`,
+            name: "central_bank_signal_day_all",
             strict: true,
-            schema: buildSchema([target.currency])
+            schema: buildSchema()
           }
         },
         input: [
@@ -359,7 +317,7 @@ async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesFor
     });
   } catch (error) {
     if (error.name === "AbortError") {
-      throw new Error(`OpenAI request timed out for ${target.focus} after ${timeoutMs}ms.`);
+      throw new Error(`OpenAI request timed out after ${timeoutMs}ms.`);
     }
     throw error;
   } finally {
@@ -376,51 +334,34 @@ async function fetchDailySnapshot(prompt, targetDate, target, existingEntriesFor
   return JSON.parse(outputText);
 }
 
-async function fetchTargetSnapshot(prompt, targetDate, target, existingEntriesForToday) {
+async function fetchSnapshotWithRetry(prompt, targetDate, existingEntriesForToday) {
   try {
-    return await fetchDailySnapshot(prompt, targetDate, target, existingEntriesForToday, reasoningEffort, REQUEST_TIMEOUT_MS);
+    return await fetchDailySnapshot(prompt, targetDate, existingEntriesForToday, reasoningEffort, REQUEST_TIMEOUT_MS);
   } catch (error) {
     const isTimeout = String(error?.message || "").includes("timed out");
     const shouldRetryWithMedium = isTimeout && reasoningEffort !== "medium";
 
     if (shouldRetryWithMedium) {
       try {
-        console.warn(`Retrying ${target.focus} with medium reasoning after timeout.`);
-        return await fetchDailySnapshot(prompt, targetDate, target, existingEntriesForToday, "medium", RETRY_TIMEOUT_MS);
+        console.warn("Retrying refresh with medium reasoning after timeout.");
+        return await fetchDailySnapshot(prompt, targetDate, existingEntriesForToday, "medium", RETRY_TIMEOUT_MS);
       } catch (retryError) {
-        console.warn(`Skipping ${target.focus}: ${retryError.message}`);
+        console.warn(`Refresh failed after retry: ${retryError.message}`);
         return {
           entries: [],
           sources: [],
-          warning: `${target.focus} skipped after retry failure: ${retryError.message}`
+          warning: `Daily refresh skipped after retry failure: ${retryError.message}`
         };
       }
     }
 
-    console.warn(`Skipping ${target.focus}: ${error.message}`);
+    console.warn(`Daily refresh failed: ${error.message}`);
     return {
       entries: [],
       sources: [],
-      warning: `${target.focus} skipped: ${error.message}`
+      warning: `Daily refresh skipped: ${error.message}`
     };
   }
-}
-
-async function mapWithConcurrency(items, limit, mapper) {
-  const results = new Array(items.length);
-  let nextIndex = 0;
-
-  async function worker() {
-    while (nextIndex < items.length) {
-      const currentIndex = nextIndex;
-      nextIndex += 1;
-      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
-    }
-  }
-
-  const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker());
-  await Promise.all(workers);
-  return results;
 }
 
 async function main() {
@@ -444,12 +385,9 @@ async function main() {
   });
 
   const targetDate = getTargetDate(timezone);
-  const snapshots = await mapWithConcurrency(BANK_TARGETS, MAX_CONCURRENT_REQUESTS, async (target) => {
-    const existingEntriesForTarget = (existingReport.entries || [])
-      .filter((entry) => entry.date === targetDate)
-      .filter((entry) => entry.currency === target.currency);
-    return fetchTargetSnapshot(prompt, targetDate, target, existingEntriesForTarget);
-  });
+  const existingEntriesForToday = (existingReport.entries || []).filter((entry) => entry.date === targetDate);
+  const snapshot = await fetchSnapshotWithRetry(prompt, targetDate, existingEntriesForToday);
+  const snapshots = [snapshot];
 
   const normalizedNewEntries = snapshots
     .flatMap((snapshot) => snapshot.entries || [])
