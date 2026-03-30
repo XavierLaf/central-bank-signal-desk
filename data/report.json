@@ -1,17 +1,26 @@
 {
   "targetDate": "2026-03-30",
   "timezone": "America/Toronto",
-  "generatedAt": "2026-03-30T18:15:00-04:00",
-  "runStatus": "Manual March 30, 2026 snapshot from live Fed flow and official event schedules",
+  "generatedAt": "2026-03-30T22:14:19.297Z",
+  "runStatus": "Automated refresh completed via OpenAI Responses API using gpt-5.4",
   "schedule": {
     "label": "Daily at 6:30 PM ET",
     "timezone": "America/Toronto"
   },
   "coverageSummary": {
-    "checked": ["USD", "EUR", "JPY", "NZD", "AUD", "CHF", "CAD", "GBP"],
-    "note": "Only currencies with same-day market-relevant communication and tone-qualified wording are surfaced in the board."
+    "checked": [
+      "USD",
+      "EUR",
+      "JPY",
+      "NZD",
+      "AUD",
+      "CHF",
+      "CAD",
+      "GBP"
+    ],
+    "note": "Only currencies with same-day market-relevant communication are surfaced in the board."
   },
-  "prompt": "You are a macro & FX trading analyst specialized in real-time central bank communication tracking.\n\nYour task is to identify ALL central bank communications TODAY (including live flow) for:\nUSD / Fed, EUR / ECB, JPY / BOJ, NZD / RBNZ, AUD / RBA, CHF / SNB, CAD / BoC, GBP / BoE\n\nPRIMARY OBJECTIVE\nCapture ALL MARKET-RELEVANT CENTRAL BANK FLOW, including:\n- Speeches\n- Interviews\n- Panel discussions\n- Q&A appearances\n- Testimonies\n- Meeting minutes / summaries\n- Official statements\n- Media appearances\n- Press conferences\n- Unscheduled remarks reported by news wires\n\nCRITICAL SEARCH PRIORITY\n1. Real-time news flow first\n2. Official central bank sources second\n3. Event-based sources third\n\nTONE CLASSIFICATION\nTone must be exactly Hawkish, Neutral, or Dovish.\nIf there is not enough wording to defend a tone, omit the communication.\n\nOUTPUT FORMAT\nDate | Member | Role/Title | Communication Type | Status | Tone | Quote/Summary | Interpretation | Expected Impact",
+  "prompt": "# Daily central bank monitoring prompt\n\nYou are a macro & FX trading analyst specialized in real-time central bank communication tracking.\n\nYour task is to identify ALL central bank communications TODAY (including live flow) for:\nUSD / Fed, EUR / ECB, JPY / BOJ, NZD / RBNZ, AUD / RBA, CHF / SNB, CAD / BoC, GBP / BoE\n\nPRIMARY OBJECTIVE\nCapture ALL MARKET-RELEVANT CENTRAL BANK FLOW, including:\n- Speeches\n- Interviews\n- Panel discussions\n- Q&A appearances\n- Testimonies\n- Meeting minutes / summaries\n- Official statements\n- Media appearances\n- Press conferences\n- Unscheduled remarks reported by news wires\n\nCRITICAL: SEARCH PRIORITY (MANDATORY ORDER)\n1. REAL-TIME NEWS FLOW (HIGHEST PRIORITY)\nSearch FIRST for same-day central bank remarks from:\n- Reuters\n- Bloomberg\n- Financial Times\n- Wall Street Journal\n- Major market terminals / summaries\n\nUse keyword detection:\n- \"said\"\n- \"told reporters\"\n- \"in interview\"\n- \"speaking at\"\n- \"panel\"\n- \"Q&A\"\n- \"conference\"\n- \"according to\"\n\nTreat these as valid communications even if:\n- not on official calendars\n- no transcript exists\n- only summarized\n\n2. OFFICIAL CENTRAL BANK SOURCES\nThen check:\n- Official calendars (Board + regional banks)\n- Official speeches / press releases / transcripts\n- Minutes / summaries of opinions\n\nInclude:\n- Federal Reserve Board + ALL regional Fed banks\n- ECB + national central bank system\n- All G10 central banks listed\n\n3. EVENT-BASED SOURCES\nCheck:\n- Conference agendas (IMF, BIS, universities, think tanks)\n- Panels and hosted discussions\n\nINCLUSION RULES\nInclude ALL policymakers:\n- Governors / Presidents\n- Voting members\n- Non-voting members\n- Assistant governors\n- Regional Fed presidents\n- Senior officials if quoted\n\nUNSCHEDULED COMMUNICATION RULE\nInclude remarks that are:\n- NOT on calendars\n- Reported via Reuters/Bloomberg\n- From interviews or media\n\nDUPLICATION RULE\n- Merge identical remarks across sources into ONE entry\n- Keep the most complete wording available\n\nTONE CLASSIFICATION RULE\nTone must be exactly:\n- Hawkish\n- Neutral\n- Dovish\n\nRules:\n- Use Hawkish/Dovish only if wording supports it\n- If only scheduled or there is not enough wording to defend a tone, omit it\n- If mixed signals, choose the dominant bias\n\nOUTPUT FORMAT\nReturn machine-readable JSON with:\n- entries\n- sources\n\nEach entry must contain:\n- date\n- currency\n- bank\n- member\n- roleTitle\n- communicationType\n- status\n- tone\n- quoteSummary\n- interpretation\n- expectedImpact\n- sourceLabel\n- sourceUrl\n\nFINAL FILTER\n- Ensure no major central bank communication today is missing\n- Prioritize market-moving flow over formal releases\n- Do not omit newswire remarks\n\nHISTORY RULE\n- Preserve prior entries already stored in `data/report.json`\n- Add or update today's rows without duplicating the same communication\n- Keep older entries available so the dashboard can plot tone drift over time\n",
   "entries": [
     {
       "date": "2026-03-27",
@@ -30,18 +39,33 @@
     },
     {
       "date": "2026-03-30",
+      "currency": "JPY",
+      "bank": "Bank of Japan",
+      "member": "Policy Board",
+      "roleTitle": "Policy Board members",
+      "communicationType": "Summary of Opinions",
+      "status": "Published",
+      "tone": "Hawkish",
+      "quoteSummary": "The BOJ’s summary of opinions showed multiple board members arguing that if the outlook is realized the Bank should continue raising the policy rate, may need to hike without hesitation if underlying inflation does not materially weaken, and should even consider accelerating hikes if oil- and yen-driven second-round effects intensify.",
+      "interpretation": "Hawkish because the published discussion leaned clearly toward further normalization, highlighted the risk of falling behind the curve, and showed openness to faster tightening if inflation persistence increases.",
+      "expectedImpact": "JPY bullish, moderate, intraday to short-term.",
+      "sourceLabel": "Bank of Japan",
+      "sourceUrl": "https://www.boj.or.jp/en/mopo/mpmsche_minu/opinion_2026/opi260319.pdf"
+    },
+    {
+      "date": "2026-03-30",
       "currency": "USD",
       "bank": "Federal Reserve",
       "member": "Jerome H. Powell",
       "roleTitle": "Chair, Federal Reserve Board",
-      "communicationType": "Q&A / moderated discussion",
+      "communicationType": "Q&A / class discussion",
       "status": "Live",
       "tone": "Dovish",
-      "quoteSummary": "Powell said the Fed can wait to see how the Iran war affects growth and inflation, arguing policymakers typically look through oil-price shocks and that policy is in a good place while inflation expectations remain anchored beyond the short term.",
-      "interpretation": "Dovish because he pushed back on pre-emptive hike fears, emphasized patience, and signaled energy-driven inflation alone is not yet enough to force tighter policy unless expectations start to drift higher.",
+      "quoteSummary": "Powell said the Fed is in a good place to wait and see how the Iran war affects growth and inflation, noting policymakers typically look through oil-price shocks and that longer-term inflation expectations appear well anchored beyond the short term.",
+      "interpretation": "Dovish because he explicitly pushed back on an immediate policy response to the energy shock, emphasized patience, and signaled that higher oil prices alone do not yet justify tighter policy while expectations remain anchored.",
       "expectedImpact": "USD bearish, moderate, intraday to short-term.",
-      "sourceLabel": "Reuters via Investing.com",
-      "sourceUrl": "https://za.investing.com/news/economy-news/powell-says-fed-can-wait-and-see-how-war-affects-inflation-4189199"
+      "sourceLabel": "Reuters via Business Recorder",
+      "sourceUrl": "https://www.brecorder.com/news/40413873/powell-says-fed-can-wait-and-see-how-war-affects-inflation"
     },
     {
       "date": "2026-03-30",
@@ -52,28 +76,33 @@
       "communicationType": "Remarks / moderated Q&A",
       "status": "Live",
       "tone": "Neutral",
-      "quoteSummary": "Williams said inflation is near 3%, with tariffs adding 0.5 to 0.75 percentage points, but he still expects inflation to slow to about 2.75% this year and reach 2% in 2027, with no significant second-round tariff effects.",
-      "interpretation": "Neutral because he acknowledged near-term inflation pressure from tariffs and energy, but balanced it with expectations for disinflation, limited spillovers and a policy stance already well positioned for both mandates.",
+      "quoteSummary": "Williams said inflation is around 3%, with tariffs adding roughly 0.5 to 0.75 percentage points, but he still expects inflation to slow to about 2.75% this year and return to 2% in 2027, with no significant second-round tariff effects and policy well positioned for both mandates.",
+      "interpretation": "Neutral because he acknowledged near-term inflation pressure from tariffs and energy, but balanced that against an unchanged disinflation outlook, limited spillovers, and a policy stance he described as appropriately calibrated.",
       "expectedImpact": "USD neutral to mildly bearish, weak, intraday to short-term.",
-      "sourceLabel": "Investing.com market summary",
+      "sourceLabel": "Reuters via Investing.com",
       "sourceUrl": "https://za.investing.com/news/economy-news/new-york-feds-williams-sees-inflation-hitting-target-by-2027-4189270"
     }
   ],
   "sources": [
+    {
+      "label": "Bank of Japan Summary of Opinions",
+      "url": "https://www.boj.or.jp/en/mopo/mpmsche_minu/opinion_2026/opi260319.pdf",
+      "note": "Official BOJ publication released on March 30, 2026 JST summarizing views from the March 18-19 policy meeting."
+    },
     {
       "label": "Economic Times article carrying Reuters-cited Miran remarks",
       "url": "https://m.economictimes.com/markets/us-stocks/news/us-stock-market-feds-miran-lays-out-roadmap-for-smaller-balance-sheet-easier-policy/articleshow/129838223.cms",
       "note": "Used because no same-day official Fed transcript was available at snapshot time."
     },
     {
-      "label": "Reuters via Investing.com on Powell's March 30 Harvard Q&A",
-      "url": "https://za.investing.com/news/economy-news/powell-says-fed-can-wait-and-see-how-war-affects-inflation-4189199",
-      "note": "Same-day live coverage of Powell's remarks that the Fed can wait and see how the Iran war affects inflation and growth."
+      "label": "Reuters via Business Recorder",
+      "url": "https://www.brecorder.com/news/40413873/powell-says-fed-can-wait-and-see-how-war-affects-inflation",
+      "note": "Same-day Reuters wire on Powell's Harvard Q&A in Cambridge, Massachusetts."
     },
     {
-      "label": "Investing.com market summary of Williams' March 30 Staten Island remarks",
+      "label": "Reuters via Investing.com",
       "url": "https://za.investing.com/news/economy-news/new-york-feds-williams-sees-inflation-hitting-target-by-2027-4189270",
-      "note": "Same-day market summary capturing Williams' inflation, tariffs and policy-path remarks from Staten Island."
+      "note": "Same-day Reuters-sourced summary of Williams's Staten Island remarks and moderated discussion."
     }
   ]
 }
