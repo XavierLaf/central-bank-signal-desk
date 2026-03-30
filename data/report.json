@@ -1,15 +1,15 @@
 {
-  "targetDate": "2026-03-27",
+  "targetDate": "2026-03-30",
   "timezone": "America/Toronto",
-  "generatedAt": "2026-03-27T17:52:00-04:00",
-  "runStatus": "Snapshot seeded from the latest manual Codex sweep",
+  "generatedAt": "2026-03-30T18:15:00-04:00",
+  "runStatus": "Manual March 30, 2026 snapshot from live Fed flow and official event schedules",
   "schedule": {
     "label": "Daily at 6:30 PM ET",
     "timezone": "America/Toronto"
   },
   "coverageSummary": {
     "checked": ["USD", "EUR", "JPY", "NZD", "AUD", "CHF", "CAD", "GBP"],
-    "note": "Only currencies with same-day market-relevant communication are surfaced in the board."
+    "note": "Only currencies with same-day market-relevant communication and tone-qualified wording are surfaced in the board."
   },
   "prompt": "You are a macro & FX trading analyst specialized in real-time central bank communication tracking.\n\nYour task is to identify ALL central bank communications TODAY (including live flow) for:\nUSD / Fed, EUR / ECB, JPY / BOJ, NZD / RBNZ, AUD / RBA, CHF / SNB, CAD / BoC, GBP / BoE\n\nPRIMARY OBJECTIVE\nCapture ALL MARKET-RELEVANT CENTRAL BANK FLOW, including:\n- Speeches\n- Interviews\n- Panel discussions\n- Q&A appearances\n- Testimonies\n- Meeting minutes / summaries\n- Official statements\n- Media appearances\n- Press conferences\n- Unscheduled remarks reported by news wires\n\nCRITICAL SEARCH PRIORITY\n1. Real-time news flow first\n2. Official central bank sources second\n3. Event-based sources third\n\nTONE CLASSIFICATION\nTone must be exactly Hawkish, Neutral, or Dovish.\nIf there is not enough wording to defend a tone, omit the communication.\n\nOUTPUT FORMAT\nDate | Member | Role/Title | Communication Type | Status | Tone | Quote/Summary | Interpretation | Expected Impact",
   "entries": [
@@ -27,6 +27,36 @@
       "expectedImpact": "USD bearish, weak to moderate, intraday to short-term.",
       "sourceLabel": "Reuters-cited market coverage",
       "sourceUrl": "https://m.economictimes.com/markets/us-stocks/news/us-stock-market-feds-miran-lays-out-roadmap-for-smaller-balance-sheet-easier-policy/articleshow/129838223.cms"
+    },
+    {
+      "date": "2026-03-30",
+      "currency": "USD",
+      "bank": "Federal Reserve",
+      "member": "Jerome H. Powell",
+      "roleTitle": "Chair, Federal Reserve Board",
+      "communicationType": "Q&A / moderated discussion",
+      "status": "Live",
+      "tone": "Dovish",
+      "quoteSummary": "Powell said the Fed can wait to see how the Iran war affects growth and inflation, arguing policymakers typically look through oil-price shocks and that policy is in a good place while inflation expectations remain anchored beyond the short term.",
+      "interpretation": "Dovish because he pushed back on pre-emptive hike fears, emphasized patience, and signaled energy-driven inflation alone is not yet enough to force tighter policy unless expectations start to drift higher.",
+      "expectedImpact": "USD bearish, moderate, intraday to short-term.",
+      "sourceLabel": "Reuters via Investing.com",
+      "sourceUrl": "https://za.investing.com/news/economy-news/powell-says-fed-can-wait-and-see-how-war-affects-inflation-4189199"
+    },
+    {
+      "date": "2026-03-30",
+      "currency": "USD",
+      "bank": "Federal Reserve Bank of New York",
+      "member": "John C. Williams",
+      "roleTitle": "President, Federal Reserve Bank of New York",
+      "communicationType": "Remarks / moderated Q&A",
+      "status": "Live",
+      "tone": "Neutral",
+      "quoteSummary": "Williams said inflation is near 3%, with tariffs adding 0.5 to 0.75 percentage points, but he still expects inflation to slow to about 2.75% this year and reach 2% in 2027, with no significant second-round tariff effects.",
+      "interpretation": "Neutral because he acknowledged near-term inflation pressure from tariffs and energy, but balanced it with expectations for disinflation, limited spillovers and a policy stance already well positioned for both mandates.",
+      "expectedImpact": "USD neutral to mildly bearish, weak, intraday to short-term.",
+      "sourceLabel": "Investing.com market summary",
+      "sourceUrl": "https://za.investing.com/news/economy-news/new-york-feds-williams-sees-inflation-hitting-target-by-2027-4189270"
     }
   ],
   "sources": [
@@ -34,6 +64,16 @@
       "label": "Economic Times article carrying Reuters-cited Miran remarks",
       "url": "https://m.economictimes.com/markets/us-stocks/news/us-stock-market-feds-miran-lays-out-roadmap-for-smaller-balance-sheet-easier-policy/articleshow/129838223.cms",
       "note": "Used because no same-day official Fed transcript was available at snapshot time."
+    },
+    {
+      "label": "Reuters via Investing.com on Powell's March 30 Harvard Q&A",
+      "url": "https://za.investing.com/news/economy-news/powell-says-fed-can-wait-and-see-how-war-affects-inflation-4189199",
+      "note": "Same-day live coverage of Powell's remarks that the Fed can wait and see how the Iran war affects inflation and growth."
+    },
+    {
+      "label": "Investing.com market summary of Williams' March 30 Staten Island remarks",
+      "url": "https://za.investing.com/news/economy-news/new-york-feds-williams-sees-inflation-hitting-target-by-2027-4189270",
+      "note": "Same-day market summary capturing Williams' inflation, tariffs and policy-path remarks from Staten Island."
     }
   ]
 }
