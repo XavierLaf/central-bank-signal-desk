@@ -1,7 +1,7 @@
 window.CENTRAL_BANK_MONITOR_DATA = {
-  "targetDate": "2026-03-30",
+  "targetDate": "2026-03-31",
   "timezone": "America/Toronto",
-  "generatedAt": "2026-03-31T00:00:41.223Z",
+  "generatedAt": "2026-03-31T23:59:57.655Z",
   "runStatus": "Automated refresh completed via OpenAI Responses API using gpt-5.4 with warnings: Daily refresh skipped: OpenAI request failed: 401 {\"error\":{\"message\":\"Incorrect API key provided: sk-proj-********************************************************************************************************************************************************JAMA. You can find your API key at https://platform.openai.com/account/api-keys.\",\"type\":\"invalid_request_error\",\"code\":\"invalid_api_key\",\"param\":null},\"status\":401}",
   "schedule": {
     "label": "Daily at 6:30 PM ET",
