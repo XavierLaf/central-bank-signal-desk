@@ -1,7 +1,7 @@
 {
-  "targetDate": "2026-08-05",
+  "targetDate": "2026-08-06",
   "timezone": "America/Toronto",
-  "generatedAt": "2026-08-06T00:52:04.364Z",
+  "generatedAt": "2026-08-07T01:51:51.787Z",
   "runStatus": "Automated refresh completed via OpenAI Responses API using gpt-5.4 with warnings: Daily refresh skipped: OpenAI request failed: 401 {\"error\":{\"message\":\"Incorrect API key provided: sk-proj-********************************************************************************************************************************************************JAMA. You can find your API key at https://platform.openai.com/account/api-keys.\",\"type\":\"invalid_request_error\",\"code\":\"invalid_api_key\",\"param\":null},\"status\":401}",
   "schedule": {
     "label": "Daily at 6:30 PM ET",
